@@ -18,6 +18,12 @@ function parseHM(s) {
         inputs.forEach(input => input.value = '');
     }
 
+    function clearInputFields() {
+        document.getElementById('linha').value = '';
+        document.getElementById('tabela').value = '';
+        document.getElementById('hora-inicial').value = '';
+    }
+
     function getFormattedDate() {
         const today = new Date();
         const year = today.getFullYear();
@@ -69,11 +75,12 @@ function parseHM(s) {
         return null;
     }
 
-    // Seleciona os campos de entrada e o botão
+    // Seleciona os campos de entrada e os botões
     const linhaInput = document.getElementById('linha');
     const tabelaInput = document.getElementById('tabela');
     const horaInicialInput = document.getElementById('hora-inicial');
     const calcularButton = document.getElementById('calcular');
+    const limparButton = document.getElementById('limpar');
 
     // Adiciona o evento de 'keydown' para cada campo para mudar o foco com a tecla Enter
     linhaInput.addEventListener('keydown', (e) => {
@@ -99,7 +106,7 @@ function parseHM(s) {
     });
     
     // Lógica do botão Calcular (mantida como está)
-    document.getElementById('calcular').addEventListener('click', async () => {
+    calcularButton.addEventListener('click', async () => {
         clearFields();
 
         const linha = linhaInput.value;
@@ -179,4 +186,10 @@ function parseHM(s) {
             document.getElementById('saida-61-200-ad').value = fmtHM(saidaAdiantamento);
             document.getElementById('chegada-61-200-ad').value = fmtHM(chegadaAdiantamento);
         }
+    });
+
+    // Evento de clique do novo botão "Limpar"
+    limparButton.addEventListener('click', () => {
+        clearInputFields();
+        clearFields();
     });
