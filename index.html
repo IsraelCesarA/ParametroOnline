@@ -1,0 +1,151 @@
+<html lang="pt-br">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <link rel="stylesheet" type="text/css" href="./style.css"/>
+    <title>GIST - Cálculo de Parâmetros</title>
+    </head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-left"></div>
+            <div class="header-center">
+                <div class="header-title">Cálculo de Parâmetros</div>
+                <div class="header-subtitle">Gerenciador Integrado do Sistema de Transporte</div>
+            </div>
+            <div class="header-right"></div>
+        </header>
+
+        <div class="main-content">
+            <div class="input-section">
+                <div class="input-group">
+                    <label for="linha">LINHA:</label>
+                    <input type="text" id="linha" />
+                </div>
+                <div class="input-group">
+                    <label for="tabela">TABELA:</label>
+                    <input type="text" id="tabela" />
+                </div>
+                <div class="input-group">
+                    <label for="hora-inicial">HORA INICIAL:</label>
+                    <input type="time" id="hora-inicial" />
+                </div>
+                <div class="input-group">
+                    <label for="hora-final">HORA FINAL:</label>
+                    <input type="time" id="hora-final" readonly />
+                </div>
+                <div class="input-group">
+                    <label>TEMPO DE VIAGEM:</label>
+                    <span id="tempo-viagem">...</span> min.
+                </div>
+                <button id="calcular" class="calc-button">Calcular</button>
+            </div>
+
+            <div class="sections-grid">
+                <div class="atrasos-section">
+                    <div class="section-title">Atrasos</div>
+                    
+                    <div class="category">
+                        <div class="category-title">VIAGENS DE 0 A 30 MIN.</div>
+                        <div class="category-content">
+                            <div class="sub-category">
+                                <div class="sub-category-title">Atraso LIMITE: (PERDA DE 100%)</div>
+                                <label for="saida-0-30-100">SAÍDA:</label>
+                                <input type="text" id="saida-0-30-100" readonly />
+                                <label for="chegada-0-30-100">CHEGADA:</label>
+                                <input type="text" id="chegada-0-30-100" readonly />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="category">
+                        <div class="category-title">VIAGENS DE 31 A 60 MIN.</div>
+                        <div class="category-content">
+                            <div class="sub-category">
+                                <div class="sub-category-title">Atraso LIMITE: (PERDA DE 25%)</div>
+                                <label for="saida-31-60-25">SAÍDA:</label>
+                                <input type="text" id="saida-31-60-25" readonly />
+                                <label for="chegada-31-60-25">CHEGADA:</label>
+                                <input type="text" id="chegada-31-60-25" readonly />
+                            </div>
+                            <div class="sub-category">
+                                <div class="sub-category-title">Atraso LIMITE: (PERDA DE 100%)</div>
+                                <label for="saida-31-60-100">SAÍDA:</label>
+                                <input type="text" id="saida-31-60-100" readonly />
+                                <label for="chegada-31-60-100">CHEGADA:</label>
+                                <input type="text" id="chegada-31-60-100" readonly />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="category">
+                        <div class="category-title">VIAGENS DE 61 A 200 MIN.</div>
+                        <div class="category-content">
+                            <div class="sub-category">
+                                <div class="sub-category-title">Atraso LIMITE: (PERDA DE 25%)</div>
+                                <label for="saida-61-200-25">SAÍDA:</label>
+                                <input type="text" id="saida-61-200-25" readonly />
+                                <label for="chegada-61-200-25">CHEGADA:</label>
+                                <input type="text" id="chegada-61-200-25" readonly />
+                            </div>
+                            <div class="sub-category">
+                                <div class="sub-category-title">Atraso LIMITE: (PERDA DE 100%)</div>
+                                <label for="saida-61-200-100">SAÍDA:</label>
+                                <input type="text" id="saida-61-200-100" readonly />
+                                <label for="chegada-61-200-100">CHEGADA:</label>
+                                <input type="text" id="chegada-61-200-100" readonly />
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="adiantamento-section">
+                    <div class="section-title">Adiantamento</div>
+                    
+                    <div class="category">
+                        <div class="category-title">VIAGENS DE 0 A 30 MIN.</div>
+                        <div class="category-content">
+                            <div class="sub-category">
+                                <div class="sub-category-title">Adiantamento LIMITE: (PERDA DE 100%)</div>
+                                <label for="saida-0-30-ad">SAÍDA:</label>
+                                <input type="text" id="saida-0-30-ad" readonly />
+                                <label for="chegada-0-30-ad">CHEGADA:</label>
+                                <input type="text" id="chegada-0-30-ad" readonly />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="category">
+                        <div class="category-title">VIAGENS DE 31 A 60 MIN.</div>
+                        <div class="category-content">
+                            <div class="sub-category">
+                                <div class="sub-category-title">Adiantamento LIMITE: (PERDA DE 100%)</div>
+                                <label for="saida-31-60-ad">SAÍDA:</label>
+                                <input type="text" id="saida-31-60-ad" readonly />
+                                <label for="chegada-31-60-ad">CHEGADA:</label>
+                                <input type="text" id="chegada-31-60-ad" readonly />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="category">
+                        <div class="category-title">VIAGENS DE 61 A 200 MIN.</div>
+                        <div class="category-content">
+                            <div class="sub-category">
+                                <div class="sub-category-title">Adiantamento LIMITE: (PERDA DE 100%)</div>
+                                <label for="saida-61-200-ad">SAÍDA:</label>
+                                <input type="text" id="saida-61-200-ad" readonly />
+                                <label for="chegada-61-200-ad">CHEGADA:</label>
+                                <input type="text" id="chegada-61-200-ad" readonly />
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+    </body>
+    <script src="./script.js"></script>
+    </html>
