@@ -166,12 +166,13 @@ function parseHM(s) {
 
             for (const trecho of dadosDaAPI.quadro.tabelas.find(t => t.numero == tabelaSelecionada).trechos) {
                 const horarios = [];
-                horarios.push(trecho.inicio.horario.slice(trecho.inicio.horario.indexOf('T') + 1, trecho.inicio.horario.length - 3));
+                horarios.push(trecho.inicio.horario.slice(trecho.inicio.horario.indexOf('T') + 1, trecho.inicio.horario.length - 3)+" - "+trecho.inicio.postoControle.trim());
                 horarios.sort((a, b) => parseHM(a) - parseHM(b)); // Ordena os horários
                 for (const horario of horarios) {
                     const option = document.createElement('option');
-                    option.value = horario;
-                    option.textContent = horario;
+                    const [horarioPosto,nomePosto] =horario.split(" - ");
+                    option.value = horarioPosto;
+                    option.textContent = `${horarioPosto}  (${nomePosto})`;
                     horaInicialSelect.appendChild(option);
                 }
             }
