@@ -167,6 +167,9 @@ header {
     align-items: center;
     gap: 10px;
 }
+.select-input{
+    max-width: 100px;
+}
 @media (max-width: 568px) {
 .header-center {
     flex-direction: column;
