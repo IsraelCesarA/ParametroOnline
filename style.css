@@ -5,202 +5,219 @@
             --card-bg: #f0f0f0;
             --border-color: #333;
             --line-color: #999;
-        }
-        body {
-            margin: 0;
-            padding: 20px;
-            font-family: Arial, sans-serif;
-            background: #e0e0e0;
-            color: #333;
-            display: flex;
-            justify-content: center;
-        }
-        .container {
-            width: 100%;
-            max-width: 1000px;
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-        }
-        header {
-            background: var(--bg-dark);
-            color: var(--text-light);
-            display: flex;
-            align-items: center;
-            padding: 10px 20px;
-        }
-        .header-left, .header-right {
-            flex: 1;
-        }
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .header-name {
-            font-size: 16px;
-            font-weight: bold;
-            color: var(--text-light);
-        }
-        .header-center {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            flex-grow: 2;
-        }
+}
+body {
+    margin: 0;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+    background: #e0e0e0;
+    color: #333;
+    display: flex;
+    justify-content: center;
+}
+.container {
+    width: 100%;
+    max-width: 1000px;
+    height: fit-content;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    
+}
+header {
+    background: var(--bg-dark);
+    color: var(--text-light);
+    display: flex;
+    align-items: center;
+    padding: 10px 20px;
+}
+.header-left, .header-right {
+    flex: 1;
+}
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.header-name {
+    font-size: 16px;
+    font-weight: bold;
+    color: var(--text-light);
+}
+.header-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex-grow: 2;
+}
+
+.header-title {
+    font-size: 24px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+}
+/*
+.header-title::after {
+    content: "|";
+    color: #d1d1d1;
+    margin: 0 10px;
+}
+*/
+.sindionibus-logo {
+    height: 40px;
+}
+.header-right {
+    text-align: right;
+}
+.main-content {
+    padding: 20px;
+}
+.input-section {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid var(--line-color);
+}
+.input-group {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.input-group label {
+    font-weight: bold;
+    font-size: 14px;
+}
+.input-group input {
+    width: 80px;
+    padding: 5px;
+    border: 1px solid var(--border-color);
+}
+.calc-button {
+    padding: 8px 20px;
+    background: var(--bg-dark);
+    color: var(--text-light);
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+}
+.clear-button {
+    padding: 8px 20px;
+    background: var(--bg-light);
+    color: var(--text-light);
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+}
+.section-title {
+    text-align: center;
+    font-weight: bold;
+    font-size: 16px;
+    padding: 10px 0;
+    border-bottom: 2px solid var(--line-color);
+}
+.sections-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+}
+.atrasos-section {
+    border-right: 2px solid var(--line-color);
+    padding-right: 20px;
+}
+.category {
+    margin-top: 20px;
+}
+.category-title {
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+.category-content {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+.sub-category {
+    flex: 1;
+    min-width: 200px;
+    border: 1px solid var(--border-color);
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+}
+.sub-category-title {
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 5px;
+}
+.sub-category input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 5px;
+    border: 1px solid var(--border-color);
+}
+.button-group{
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+@media (max-width: 568px) {
+.header-center {
+    flex-direction: column;
+    text-align: center;
+}
+.input-section {
+    flex-direction: column;
+}
+.sections-grid {
+    grid-template-columns: 1fr;
+}
+.atrasos-section {
+    border-right: none;
+    padding-right: 0;
+    border-bottom: 2px solid var(--line-color);
+    padding-bottom: 20px;
+}
+.gist-logo{
+    width: 100%;   
+}
+.header-left {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+header{
+    display: flex;
+    flex-direction: column;
+    gap:8px;
+}
+.header-text-container{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+.header-title{
+    font-size: 16px;
+    font-weight: bold;
+}
+.header-subtitle{
+    font-size: 12px;
+}
+.container {
+    width: 100%;
+    height: fit-content;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+
+}
+}
         
-        .header-title {
-            font-size: 24px;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-        }
-        /*
-        .header-title::after {
-            content: "|";
-            color: #d1d1d1;
-            margin: 0 10px;
-        }
-        */
-        .sindionibus-logo {
-            height: 40px;
-        }
-        .header-right {
-            text-align: right;
-        }
-        .main-content {
-            padding: 20px;
-        }
-        .input-section {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            justify-content: center;
-            gap: 20px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid var(--line-color);
-        }
-        .input-group {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .input-group label {
-            font-weight: bold;
-            font-size: 14px;
-        }
-        .input-group input {
-            width: 80px;
-            padding: 5px;
-            border: 1px solid var(--border-color);
-        }
-        .calc-button {
-            padding: 8px 20px;
-            background: var(--bg-dark);
-            color: var(--text-light);
-            border: none;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        .clear-button {
-            padding: 8px 20px;
-            background: var(--bg-light);
-            color: var(--text-light);
-            border: none;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        .section-title {
-            text-align: center;
-            font-weight: bold;
-            font-size: 16px;
-            padding: 10px 0;
-            border-bottom: 2px solid var(--line-color);
-        }
-        .sections-grid {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 20px;
-        }
-        .atrasos-section {
-            border-right: 2px solid var(--line-color);
-            padding-right: 20px;
-        }
-        .category {
-            margin-top: 20px;
-        }
-        .category-title {
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-        .category-content {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-        }
-        .sub-category {
-            flex: 1;
-            min-width: 200px;
-            border: 1px solid var(--border-color);
-            padding: 10px;
-            display: flex;
-            flex-direction: column;
-        }
-        .sub-category-title {
-            font-weight: bold;
-            text-align: center;
-            margin-bottom: 5px;
-        }
-        .sub-category input {
-            width: 100%;
-            box-sizing: border-box;
-            padding: 5px;
-            border: 1px solid var(--border-color);
-        }
-        @media (max-width: 568px) {
-            .header-center {
-                flex-direction: column;
-                text-align: center;
-            }
-            .input-section {
-                flex-direction: column;
-            }
-            .sections-grid {
-                grid-template-columns: 1fr;
-            }
-            .atrasos-section {
-                border-right: none;
-                padding-right: 0;
-                border-bottom: 2px solid var(--line-color);
-                padding-bottom: 20px;
-            }
-            .gist-logo{
-                width: 80vw;
-            }
-            .header-left {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-            }
-            header{
-                display: flex;
-                flex-direction: column;
-                gap:8px;
-            }
-            .header-text-container{
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
-            }
-            .header-title{
-                font-size: 16px;
-                font-weight: bold;
-            }
-            .header-subtitle{
-                font-size: 12px;
-            }
-        }
-        }
