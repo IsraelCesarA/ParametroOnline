@@ -9,7 +9,7 @@
     <div class="container">
         <header>
             <div class="header-left"><img class="gist-logo" src="https://th.bing.com/th/id/OIP.WXt5gHtQWWCULzuSYExo-AHaBQ?w=311&h=61&c=7&r=0&o=7&dpr=1.3&pid=1.7&rm=3" alt="Sindionibus logo" /></div>
-            <div>
+            
             <div class="header-text-container">
             <h1 class="header-title">Gerência de Operações</h1>
             <h2 class="header-subtitle">Cálculo de Parâmetros do GIST</h2>
@@ -23,12 +23,18 @@
                     <input type="text" id="linha" />
                 </div>
                 <div class="input-group">
-                    <label for="tabela">TABELA:</label>
-                    <input type="text" id="tabela" />
+                    <label for="tabela-select">TABELA:</label>
+                    <!-- <input type="text" id="tabela" /> -->
+                    <select id="tabela-select" disabled>
+                        <option ></option>
+                    </select>
                 </div>
                 <div class="input-group">
                     <label for="hora-inicial">HORA INICIAL:</label>
-                    <input type="time" id="hora-inicial" />
+                     <select name="hora-inicial" id="hora-inicial-select" disabled>
+                        <option></option>
+                     </select>
+                    <!-- <input type="time" id="hora-inicial" /> -->
                 </div>
                 <div class="input-group">
                     <label for="hora-final">HORA FINAL:</label>
@@ -38,8 +44,10 @@
                     <label>TEMPO DE VIAGEM:</label>
                     <span id="tempo-viagem">...</span> min.
                 </div>
+                <div class="button-group">
                 <button id="calcular" class="calc-button">Calcular</button>
                 <button id="limpar" class="clear-button">Limpar</button>
+                </div>
             </div>
 
             <div class="sections-grid">
@@ -146,6 +154,7 @@
                 </div>
             
         </div>
+    </div>
     </div>
     </body>
     <script src="./script.js"></script>
