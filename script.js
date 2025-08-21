@@ -19,9 +19,20 @@ function parseHM(s) {
     }
 
     function clearInputFields() {
+        // document.getElementById('linha').value = '';
+        // document.getElementById('tabela').value = '';
+        // document.getElementById('hora-inicial').value = '';
         document.getElementById('linha').value = '';
-        document.getElementById('tabela').value = '';
-        document.getElementById('hora-inicial').value = '';
+        document.getElementById('tabela-select').value = '';
+        document.getElementById('hora-inicial-select').value = '';
+        document.getElementById('tabela-select').disabled = true;
+        document.getElementById('hora-inicial-select').disabled = true;
+        while (tabelaSelect.options.length > 1) {
+            tabelaSelect.options[1].remove();
+        }
+        while (horaInicialSelect.options.length > 1) {
+            horaInicialSelect.options[1].remove();
+        }
     }
 
     function getFormattedDate() {
@@ -81,6 +92,9 @@ function parseHM(s) {
     const horaInicialInput = document.getElementById('hora-inicial');
     const calcularButton = document.getElementById('calcular');
     const limparButton = document.getElementById('limpar');
+    const tabelaSelect = document.getElementById('tabela-select');
+    const horaInicialSelect = document.getElementById('hora-inicial-select');
+    var dadosDaAPI = null;
 
     // Adiciona o evento de 'keydown' para cada campo para mudar o foco com a tecla Enter
     linhaInput.addEventListener('keydown', (e) => {
@@ -90,38 +104,108 @@ function parseHM(s) {
         }
     });
 
-    tabelaInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            horaInicialInput.focus();
+    // tabelaInput.addEventListener('keydown', (e) => {
+    //     if (e.key === 'Enter') {
+    //         e.preventDefault();
+    //         horaInicialInput.focus();
+    //     }
+    // });
+
+    // horaInicialInput.addEventListener('keydown', async (e) => {
+    //     if (e.key === 'Enter') {
+    //         e.preventDefault();
+    //         // Ao pressionar Enter no último campo, dispara o clique no botão Calcular
+    //         calcularButton.click();
+    //     }
+    // });
+
+    linhaInput.addEventListener('blur', async () => {
+        const linha = Number(linhaInput.value.trim());
+        if (!isNaN(linha)) {
+            const programacao = await fetchHorariosFromAPI(linha);
+            dadosDaAPI = programacao;
+            if (programacao) {
+                if(tabelaSelect.options.length > 1) {
+                while (tabelaSelect.options.length > 1) {
+                    tabelaSelect.options[1].remove();
+                }
+                }
+                if(horaInicialSelect.options.length > 1) {
+                while (horaInicialSelect.options.length > 1) {
+                    horaInicialSelect.options[1].remove();
+                }
+                horaInicialSelect.disabled = true;
+                }
+
+                for(let tabela of programacao.quadro.tabelas) {
+                    const tabelas = [];
+                    tabelas.push(tabela.numero);
+                    tabelas.sort((a, b) => a - b); // Ordena as tabelas numericamente
+                    for (const numeroTabela of tabelas) {
+                        const option = document.createElement('option');
+                        option.value = numeroTabela;
+                        option.textContent = numeroTabela;
+                        tabelaSelect.appendChild(option);
+                    }
+                }
+                tabelaSelect.disabled = false;
+                
+            }
         }
     });
 
-    horaInicialInput.addEventListener('keydown', async (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            // Ao pressionar Enter no último campo, dispara o clique no botão Calcular
-            calcularButton.click();
+    tabelaSelect.addEventListener('change', (e) => {
+        const tabelaSelecionada = e.target.value;
+        if (tabelaSelecionada) {
+            horaInicialSelect.disabled = false;
+            if(horaInicialSelect.options.length > 1) {
+                while (horaInicialSelect.options.length > 1) {
+                    horaInicialSelect.options[1].remove();
+                }
+            }
+
+            for (const trecho of dadosDaAPI.quadro.tabelas.find(t => t.numero == tabelaSelecionada).trechos) {
+                const horarios = [];
+                horarios.push(trecho.inicio.horario.slice(trecho.inicio.horario.indexOf('T') + 1, trecho.inicio.horario.length - 3));
+                horarios.sort((a, b) => parseHM(a) - parseHM(b)); // Ordena os horários
+                for (const horario of horarios) {
+                    const option = document.createElement('option');
+                    option.value = horario;
+                    option.textContent = horario;
+                    horaInicialSelect.appendChild(option);
+                }
+            }
         }
     });
-    
+
+    // horaInicialSelect.addEventListener('change', (e) => {
+    //     const horaInicial = e.target.value;
+    //     if (horaInicial) {
+    //         horaFinalInput.value = calcularHoraFinal(horaInicial);
+    //     }
+    // });
+
     // Lógica do botão Calcular (mantida como está)
     calcularButton.addEventListener('click', async () => {
         clearFields();
 
+        // const linha = linhaInput.value;
+        // const tabela = tabelaInput.value;
+        // const horaInicialInputVal = horaInicialInput.value;
+
         const linha = linhaInput.value;
-        const tabela = tabelaInput.value;
-        const horaInicialInputVal = horaInicialInput.value;
+        const tabela = tabelaSelect.value;
+        const horaInicialInputVal = horaInicialSelect.value;
 
         if (!linha || !tabela || !horaInicialInputVal) {
             alert('Por favor, preencha a Linha, Tabela e Hora Inicial.');
             return;
         }
 
-        const dadosDaAPI = await fetchHorariosFromAPI(linha);
-        if (!dadosDaAPI) {
-            return;
-        }
+        // const dadosDaAPI = await fetchHorariosFromAPI(linha);
+        // if (!dadosDaAPI) {
+        //     return;
+        // }
 
         const horaFinal = findHoraFinal(dadosDaAPI, tabela, horaInicialInputVal);
 
