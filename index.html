@@ -30,6 +30,7 @@
                         <label for="password">Senha</label>
                         <input type="password" id="password" name="password" required>
                     </div>
+                    <p id="error-message" style="color: red; text-align: center; margin-top: 10px;"></p>
                     <button type="button" class="login-button" id="sign-in">Entrar</button>
                 </div>
             </div>
@@ -55,7 +56,6 @@
                 </div>
                 <div class="input-group">
                     <label for="tabela-select">TABELA:</label>
-                    <!-- <input type="text" id="tabela" /> -->
                     <select id="tabela-select" class="select-input" disabled>
                         <option ></option>
                     </select>
@@ -65,8 +65,7 @@
                      <select name="hora-inicial" id="hora-inicial-select" class="select-input" disabled>
                         <option></option>
                      </select>
-                    <!-- <input type="time" id="hora-inicial" /> -->
-                </div>
+                    </div>
                 <div class="input-group">
                     <label for="hora-final">HORA FINAL:</label>
                     <input type="time" id="hora-final" readonly />
