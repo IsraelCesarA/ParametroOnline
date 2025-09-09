@@ -1,3 +1,5 @@
+import {acessos} from "./acessos.js";
+
 function parseHM(s) {
         if (!s) return null;
         const [hh, mm] = s.split(':').map(Number);
@@ -94,6 +96,9 @@ function parseHM(s) {
     const limparButton = document.getElementById('limpar');
     const tabelaSelect = document.getElementById('tabela-select');
     const horaInicialSelect = document.getElementById('hora-inicial-select');
+    const username = document.getElementById('username');
+    const password = document.getElementById('password');
+    const signIn = document.getElementById('sign-in');
     var dadosDaAPI = null;
 
     // Adiciona o evento de 'keydown' para cada campo para mudar o foco com a tecla Enter
@@ -103,6 +108,24 @@ function parseHM(s) {
             tabelaInput.focus();
         }
     });
+    
+    signIn.addEventListener('click', () =>{
+        if(username.value.trim().length==0 || password.value.trim().length==0){
+            alert("Usuário ou senha inválidos");
+            return
+        }
+        if(acessos[username.value.trim().toLowerCase()]){
+            if(acessos[username.value.trim().toLowerCase()] && acessos[username.value.trim().toLowerCase()]==password.value){
+                
+            const loginContainer = document.getElementsByClassName('login-container')[0];
+            const container = document.getElementsByClassName('container')[0];
+            loginContainer.style.display = "none";
+            container.style.display = "block";
+            }
+        }else {
+            alert("Usuário ou senha inválidos");
+        }
+    })
 
     // tabelaInput.addEventListener('keydown', (e) => {
     //     if (e.key === 'Enter') {
