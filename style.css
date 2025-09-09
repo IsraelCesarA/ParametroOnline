@@ -1,10 +1,10 @@
 :root {
-            --bg-dark: #06242F;
-            --bg-light: #0C455A;
-            --text-light: #fff;
-            --card-bg: #f0f0f0;
-            --border-color: #333;
-            --line-color: #999;
+    --bg-dark: #06242F;
+    --bg-light: #0C455A;
+    --text-light: #fff;
+    --card-bg: #f0f0f0;
+    --border-color: #333;
+    --line-color: #999;
 }
 body {
     margin: 0;
@@ -22,6 +22,7 @@ body {
     background: var(--card-bg);
     border: 1px solid var(--border-color);
     box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    display: none;
     
 }
 header {
@@ -65,6 +66,15 @@ header {
     margin: 0 10px;
 }
 */
+.login-container {
+    width: 100%;
+    max-width: 1150px;
+    height: fit-content;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    
+}
 .sindionibus-logo {
     height: 40px;
 }
@@ -170,6 +180,55 @@ header {
 .select-input{
     max-width: 100px;
 }
+.login-box {
+    background-color: #fff;
+    padding: 40px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    width: fit-content;
+    text-align: center;
+    margin: auto;
+    margin-top: 50px;
+}
+.login-box h2 {
+    margin-bottom: 24px;
+    color: var(--bg-dark);
+}
+.login-box .input-group {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 15px;
+}
+.login-box .input-group label {
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #555;
+}
+.login-box .input-group input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+.login-button {
+    width: 100%;
+    padding: 12px;
+    background-color: var(--bg-light);
+    border: none;
+    border-radius: 4px;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-top: 10px;
+}
+.login-button:hover {
+    background-color: var(--bg-dark);
+}
+    
+
 @media (max-width: 568px) {
 .header-center {
     flex-direction: column;
@@ -225,5 +284,6 @@ header{
 .imagem-parametro{
     width: 100%;
 }
+
 }
         
