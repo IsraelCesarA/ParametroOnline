@@ -99,6 +99,7 @@ function parseHM(s) {
     const username = document.getElementById('username');
     const password = document.getElementById('password');
     const signIn = document.getElementById('sign-in');
+    const errorMessageElement = document.getElementById('error-message');
     var dadosDaAPI = null;
 
     // Adiciona o evento de 'keydown' para cada campo para mudar o foco com a tecla Enter
@@ -109,23 +110,29 @@ function parseHM(s) {
         }
     });
     
-    signIn.addEventListener('click', () =>{
-        if(username.value.trim().length==0 || password.value.trim().length==0){
-            alert("Usuário ou senha inválidos");
-            return
+    signIn.addEventListener('click', () => {
+        errorMessageElement.textContent = ''; // Limpa a mensagem de erro a cada tentativa
+        
+        if (username.value.trim().length === 0 || password.value.trim().length === 0) {
+            errorMessageElement.textContent = "Usuário ou senha não podem estar vazios.";
+            return;
         }
-        if(acessos[username.value.trim().toLowerCase()]){
-            if(acessos[username.value.trim().toLowerCase()] && acessos[username.value.trim().toLowerCase()]==password.value){
-                
-            const loginContainer = document.getElementsByClassName('login-container')[0];
-            const container = document.getElementsByClassName('container')[0];
-            loginContainer.style.display = "none";
-            container.style.display = "block";
+
+        const user = username.value.trim().toLowerCase();
+        
+        if (acessos[user]) {
+            if (acessos[user] === password.value) {
+                const loginContainer = document.getElementsByClassName('login-container')[0];
+                const container = document.getElementsByClassName('container')[0];
+                loginContainer.style.display = "none";
+                container.style.display = "block";
+            } else {
+                errorMessageElement.textContent = "Usuário ou senha inválidos.";
             }
-        }else {
-            alert("Usuário ou senha inválidos");
+        } else {
+            errorMessageElement.textContent = "Usuário ou senha inválidos.";
         }
-    })
+    });
 
     // tabelaInput.addEventListener('keydown', (e) => {
     //     if (e.key === 'Enter') {
