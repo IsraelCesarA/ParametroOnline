@@ -17,13 +17,11 @@ body {
 }
 .container {
     width: 100%;
-    max-width: 1150px;
+    max-width: 1000px;
     height: fit-content;
     background: var(--card-bg);
     border: 1px solid var(--border-color);
     box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-    display: none;
-    
 }
 header {
     background: var(--bg-dark);
@@ -59,22 +57,7 @@ header {
     display: flex;
     align-items: center;
 }
-/*
-.header-title::after {
-    content: "|";
-    color: #d1d1d1;
-    margin: 0 10px;
-}
-*/
-.login-container {
-    width: 100%;
-    max-width: 1150px;
-    height: fit-content;
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-    
-}
+
 .sindionibus-logo {
     height: 40px;
 }
@@ -180,110 +163,98 @@ header {
 .select-input{
     max-width: 100px;
 }
-.login-box {
-    background-color: #fff;
-    padding: 40px;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    width: fit-content;
+
+/* --- ESTILOS DA NOVA TABELA DE PARÂMETROS --- */
+.tabela-parametros-container {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 2px solid var(--line-color);
+}
+.tabela-parametros-container h2 {
     text-align: center;
-    margin: auto;
-    margin-top: 50px;
-}
-.login-box h2 {
-    margin-bottom: 24px;
-    color: var(--bg-dark);
-}
-.login-box .input-group {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    margin-bottom: 15px;
-}
-.login-box .input-group label {
-    font-weight: bold;
-    margin-bottom: 5px;
-    color: #555;
-}
-.login-box .input-group input {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    box-sizing: border-box;
-}
-.login-button {
-    width: 100%;
-    padding: 12px;
-    background-color: var(--bg-light);
-    border: none;
-    border-radius: 4px;
-    color: white;
-    font-size: 16px;
-    cursor: pointer;
-    font-weight: bold;
-    margin-top: 10px;
-}
-.login-button:hover {
+    color: var(--text-light);
     background-color: var(--bg-dark);
+    padding: 12px;
+    margin: 0;
+    font-size: 18px;
 }
-    
+.tabela-parametros-wrapper {
+    overflow-x: auto;
+}
+.tabela-parametros {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    text-align: center;
+    border: 1px solid var(--border-color);
+}
+.tabela-parametros th, .tabela-parametros td {
+    padding: 10px 8px;
+    border: 1px solid var(--border-color);
+}
+.tabela-parametros th {
+    background-color: var(--bg-light);
+    color: var(--text-light);
+    font-size: 14px;
+    font-weight: bold;
+}
+.tabela-parametros td {
+    font-size: 14px;
+    color: #333;
+}
+.coluna-destaque {
+    background-color: rgba(12, 69, 90, 0.1);
+}
 
 @media (max-width: 568px) {
-.header-center {
-    flex-direction: column;
-    text-align: center;
+    .header-center {
+        flex-direction: column;
+        text-align: center;
+    }
+    .input-section {
+        flex-direction: column;
+    }
+    .sections-grid {
+        grid-template-columns: 1fr;
+    }
+    .atrasos-section {
+        border-right: none;
+        padding-right: 0;
+        border-bottom: 2px solid var(--line-color);
+        padding-bottom: 20px;
+    }
+    .gist-logo{
+        width: 100%;   
+    }
+    .header-left {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+    }
+    header{
+        display: flex;
+        flex-direction: column;
+        gap:8px;
+    }
+    .header-text-container{
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+    .header-title{
+        font-size: 16px;
+        font-weight: bold;
+    }
+    .header-subtitle{
+        font-size: 12px;
+    }
+    .container {
+        width: 100%;
+        height: fit-content;
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
 }
-.input-section {
-    flex-direction: column;
-}
-.sections-grid {
-    grid-template-columns: 1fr;
-}
-.atrasos-section {
-    border-right: none;
-    padding-right: 0;
-    border-bottom: 2px solid var(--line-color);
-    padding-bottom: 20px;
-}
-.gist-logo{
-    width: 100%;   
-}
-.header-left {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-}
-header{
-    display: flex;
-    flex-direction: column;
-    gap:8px;
-}
-.header-text-container{
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-}
-.header-title{
-    font-size: 16px;
-    font-weight: bold;
-}
-.header-subtitle{
-    font-size: 12px;
-}
-.container {
-    width: 100%;
-    height: fit-content;
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-
-}
-.imagem-parametro{
-    width: 100%;
-}
-
-}
-        
