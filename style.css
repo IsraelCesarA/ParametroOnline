@@ -8,7 +8,7 @@
 }
 body {
     margin: 0;
-    padding: 20px;
+    padding: 10px; /* Reduzido para ganhar espaço de tela */
     font-family: Arial, sans-serif;
     background: #e0e0e0;
     color: #333;
@@ -17,7 +17,7 @@ body {
 }
 .container {
     width: 100%;
-    max-width: 1000px;
+    max-width: 1100px; /* Levemente alargado para acomodar bem os 4 quadros menores */
     height: fit-content;
     background: var(--card-bg);
     border: 1px solid var(--border-color);
@@ -28,7 +28,7 @@ header {
     color: var(--text-light);
     display: flex;
     align-items: center;
-    padding: 10px 20px;
+    padding: 8px 15px; /* Mais compacto */
 }
 .header-left, .header-right {
     flex: 1;
@@ -52,28 +52,32 @@ header {
 }
 
 .header-title {
-    font-size: 24px;
+    font-size: 20px; /* Reduzido levemente */
     font-weight: bold;
     display: flex;
     align-items: center;
+    margin: 0;
 }
-
+.header-subtitle {
+    font-size: 14px;
+    margin: 5px 0 0 0;
+}
 .sindionibus-logo {
-    height: 40px;
+    height: 35px; /* Reduzido levemente */
 }
 .header-right {
     text-align: right;
 }
 .main-content {
-    padding: 20px;
+    padding: 15px; /* Reduzido */
 }
 .input-section {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: center;
-    gap: 20px;
-    padding-bottom: 20px;
+    gap: 15px;
+    padding-bottom: 15px;
     border-bottom: 2px solid var(--line-color);
 }
 .input-group {
@@ -83,15 +87,15 @@ header {
 }
 .input-group label {
     font-weight: bold;
-    font-size: 14px;
+    font-size: 13px;
 }
 .input-group input {
-    width: 80px;
-    padding: 5px;
+    width: 75px;
+    padding: 4px;
     border: 1px solid var(--border-color);
 }
 .calc-button {
-    padding: 8px 20px;
+    padding: 6px 18px;
     background: var(--bg-dark);
     color: var(--text-light);
     border: none;
@@ -99,7 +103,7 @@ header {
     font-weight: bold;
 }
 .clear-button {
-    padding: 8px 20px;
+    padding: 6px 18px;
     background: var(--bg-light);
     color: var(--text-light);
     border: none;
@@ -109,49 +113,65 @@ header {
 .section-title {
     text-align: center;
     font-weight: bold;
-    font-size: 16px;
-    padding: 10px 0;
+    font-size: 15px;
+    padding: 8px 0;
     border-bottom: 2px solid var(--line-color);
+    margin-bottom: 10px;
 }
 .sections-grid {
     display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 20px;
+    grid-template-columns: 1fr 1fr; 
+    gap: 15px; /* Espaço entre as colunas reduzido */
 }
 .atrasos-section {
     border-right: 2px solid var(--line-color);
-    padding-right: 20px;
+    padding-right: 15px;
 }
 .category {
-    margin-top: 20px;
+    margin-top: 10px; /* Margem reduzida para grudar mais os blocos */
 }
 .category-title {
     font-weight: bold;
-    margin-bottom: 10px;
+    margin-bottom: 5px;
+    font-size: 13px;
+    color: var(--bg-dark);
 }
 .category-content {
     display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
+    flex-wrap: nowrap; /* FORÇA os quadros a ficarem lado a lado */
+    gap: 10px; /* Reduzido para caber melhor na tela */
 }
 .sub-category {
     flex: 1;
-    min-width: 200px;
+    min-width: 0; /* Remove a trava que quebrava a linha */
     border: 1px solid var(--border-color);
-    padding: 10px;
+    padding: 6px 8px; /* Mais compacto internamente */
     display: flex;
     flex-direction: column;
+    justify-content: center;
+    background-color: #fff;
 }
 .sub-category-title {
     font-weight: bold;
     text-align: center;
-    margin-bottom: 5px;
+    margin-bottom: 6px;
+    font-size: 10px; /* Fonte menor para caber textos longos (ex: Distorção) */
+}
+.sub-category label {
+    font-size: 10px;
+    font-weight: bold;
+    margin-bottom: 2px;
 }
 .sub-category input {
     width: 100%;
     box-sizing: border-box;
-    padding: 5px;
+    padding: 3px;
     border: 1px solid var(--border-color);
+    font-size: 12px;
+    margin-bottom: 4px;
+}
+.sub-category input:last-child {
+    margin-bottom: 0; /* Tira a margem do último input para enxugar espaço */
 }
 .button-group{
     display: flex;
@@ -164,19 +184,19 @@ header {
     max-width: 100px;
 }
 
-/* --- ESTILOS DA NOVA TABELA DE PARÂMETROS --- */
+/* --- ESTILOS DA TABELA DE PARÂMETROS --- */
 .tabela-parametros-container {
-    margin-top: 40px;
-    padding-top: 20px;
+    margin-top: 25px; /* Margem reduzida */
+    padding-top: 15px;
     border-top: 2px solid var(--line-color);
 }
 .tabela-parametros-container h2 {
     text-align: center;
     color: var(--text-light);
     background-color: var(--bg-dark);
-    padding: 12px;
+    padding: 8px;
     margin: 0;
-    font-size: 18px;
+    font-size: 14px;
 }
 .tabela-parametros-wrapper {
     overflow-x: auto;
@@ -189,23 +209,34 @@ header {
     border: 1px solid var(--border-color);
 }
 .tabela-parametros th, .tabela-parametros td {
-    padding: 10px 8px;
+    padding: 6px; /* Tabelas mais estreitas */
     border: 1px solid var(--border-color);
 }
 .tabela-parametros th {
     background-color: var(--bg-light);
     color: var(--text-light);
-    font-size: 14px;
+    font-size: 12px;
     font-weight: bold;
 }
 .tabela-parametros td {
-    font-size: 14px;
+    font-size: 12px;
     color: #333;
 }
 .coluna-destaque {
     background-color: rgba(12, 69, 90, 0.1);
 }
 
+@media (max-width: 768px) {
+    .sections-grid {
+        grid-template-columns: 1fr; /* Em telas menores (celular) ele empilha tudo */
+    }
+    .atrasos-section {
+        border-right: none;
+        padding-right: 0;
+        border-bottom: 2px solid var(--line-color);
+        padding-bottom: 15px;
+    }
+}
 @media (max-width: 568px) {
     .header-center {
         flex-direction: column;
@@ -213,15 +244,6 @@ header {
     }
     .input-section {
         flex-direction: column;
-    }
-    .sections-grid {
-        grid-template-columns: 1fr;
-    }
-    .atrasos-section {
-        border-right: none;
-        padding-right: 0;
-        border-bottom: 2px solid var(--line-color);
-        padding-bottom: 20px;
     }
     .gist-logo{
         width: 100%;   
@@ -250,11 +272,7 @@ header {
     .header-subtitle{
         font-size: 12px;
     }
-    .container {
-        width: 100%;
-        height: fit-content;
-        background: var(--card-bg);
-        border: 1px solid var(--border-color);
-        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    .category-content {
+        flex-direction: column; /* No celular bem pequeno os quadros ficam um em cima do outro */
     }
 }
