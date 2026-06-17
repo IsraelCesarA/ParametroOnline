@@ -4,47 +4,17 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <link rel="stylesheet" type="text/css" href="./style.css"/>
     <title>GEOPE - Cálculo de Parâmetros</title>
-    </head>
+</head>
 <body>
-    
-    <div class="login-container">
+    <div class="container">
         <header>
             <div class="header-left">
                 <img class="gist-logo" src="https://th.bing.com/th/id/OIP.WXt5gHtQWWCULzuSYExo-AHaBQ?w=311&h=61&c=7&r=0&o=7&dpr=1.3&pid=1.7&rm=3" alt="Sindionibus logo" />
             </div>
+            
             <div class="header-text-container">
                 <h1 class="header-title">Gerência de Operações</h1>
                 <h2 class="header-subtitle">Cálculo de Parâmetros do GIST</h2>
-            </div>
-        </header>
-
-        <div class="main-content">
-            <div class="login-box">
-                <h2>Login</h2>
-                <div id="loginForm">
-                    <div class="input-group">
-                        <label for="username">Usuário</label>
-                        <input type="text" id="username" name="username" required>
-                    </div>
-                    <div class="input-group">
-                        <label for="password">Senha</label>
-                        <input type="password" id="password" name="password" required>
-                    </div>
-                    <p id="error-message" style="color: red; text-align: center; margin-top: 10px;"></p>
-                    <button type="button" class="login-button" id="sign-in">Entrar</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    
-    <div class="container">
-        <header>
-            <div class="header-left"><img class="gist-logo" src="https://th.bing.com/th/id/OIP.WXt5gHtQWWCULzuSYExo-AHaBQ?w=311&h=61&c=7&r=0&o=7&dpr=1.3&pid=1.7&rm=3" alt="Sindionibus logo" /></div>
-            
-            <div class="header-text-container">
-            <h1 class="header-title">Gerência de Operações</h1>
-            <h2 class="header-subtitle">Cálculo de Parâmetros do GIST</h2>
             </div>
         </header>
 
@@ -65,7 +35,7 @@
                      <select name="hora-inicial" id="hora-inicial-select" class="select-input" disabled>
                         <option></option>
                      </select>
-                    </div>
+                </div>
                 <div class="input-group">
                     <label for="hora-final">HORA FINAL:</label>
                     <input type="time" id="hora-final" readonly />
@@ -75,20 +45,27 @@
                     <span id="tempo-viagem">...</span> min.
                 </div>
                 <div class="button-group">
-                <button id="calcular" class="calc-button">Calcular</button>
-                <button id="limpar" class="clear-button">Limpar</button>
+                    <button id="calcular" class="calc-button">Calcular</button>
+                    <button id="limpar" class="clear-button">Limpar</button>
                 </div>
             </div>
 
             <div class="sections-grid">
                 <div class="atrasos-section">
-                    <div class="section-title">Atrasos</div>
+                    <div class="section-title">Atrasos / Distorção</div>
                     
                     <div class="category">
                         <div class="category-title">VIAGENS DE 0 A 30 MIN.</div>
                         <div class="category-content">
                             <div class="sub-category">
-                                <div class="sub-category-title">Atraso LIMITE: (PERDA DE 100%)</div>
+                                <div class="sub-category-title">Atraso LIMITE: (PERDA DE 25%)</div>
+                                <label for="saida-0-30-25">SAÍDA:</label>
+                                <input type="text" id="saida-0-30-25" readonly />
+                                <label for="chegada-0-30-25">CHEGADA:</label>
+                                <input type="text" id="chegada-0-30-25" readonly />
+                            </div>
+                            <div class="sub-category">
+                                <div class="sub-category-title">Distorção LIMITE: (PERDA DE 100%)</div>
                                 <label for="saida-0-30-100">SAÍDA:</label>
                                 <input type="text" id="saida-0-30-100" readonly />
                                 <label for="chegada-0-30-100">CHEGADA:</label>
@@ -108,7 +85,7 @@
                                 <input type="text" id="chegada-31-60-25" readonly />
                             </div>
                             <div class="sub-category">
-                                <div class="sub-category-title">Atraso LIMITE: (PERDA DE 100%)</div>
+                                <div class="sub-category-title">Distorção LIMITE: (PERDA DE 100%)</div>
                                 <label for="saida-31-60-100">SAÍDA:</label>
                                 <input type="text" id="saida-31-60-100" readonly />
                                 <label for="chegada-31-60-100">CHEGADA:</label>
@@ -128,7 +105,7 @@
                                 <input type="text" id="chegada-61-200-25" readonly />
                             </div>
                             <div class="sub-category">
-                                <div class="sub-category-title">Atraso LIMITE: (PERDA DE 100%)</div>
+                                <div class="sub-category-title">Distorção LIMITE: (PERDA DE 100%)</div>
                                 <label for="saida-61-200-100">SAÍDA:</label>
                                 <input type="text" id="saida-61-200-100" readonly />
                                 <label for="chegada-61-200-100">CHEGADA:</label>
@@ -136,7 +113,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                 </div>
 
                 <div class="adiantamento-section">
@@ -180,14 +157,60 @@
                             </div>
                         </div>
                     </div>
-                    
+
                 </div>
-            
+            </div>
+
+            <div class="tabela-parametros-container">
+                <h2>Parâmetros para o GIST – Vigência a partir de 01/06/2026</h2>
+                <div class="tabela-parametros-wrapper">
+                    <table class="tabela-parametros">
+                        <thead>
+                            <tr>
+                                <th>Tempo do Trecho ( min )</th>
+                                <th>Adiant. Saída/Cheg. ( % )</th>
+                                <th>% Perda do Trecho</th>
+                                <th>Atraso Sai./Cheg.</th>
+                                <th>% Perda do Trecho</th>
+                                <th>Parâmetro Distorção</th>
+                                <th>% Perda do Trecho</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>0 – 30</td>
+                                <td class="coluna-destaque">&gt;40%</td>
+                                <td class="coluna-destaque">25%</td>
+                                <td>&gt;100%</td>
+                                <td>25%</td>
+                                <td>200%</td>
+                                <td>100%</td>
+                            </tr>
+                            <tr>
+                                <td>31-60</td>
+                                <td class="coluna-destaque">&gt;28%</td>
+                                <td class="coluna-destaque">25%</td>
+                                <td>&gt;80%</td>
+                                <td>25%</td>
+                                <td>200%</td>
+                                <td>100%</td>
+                            </tr>
+                            <tr>
+                                <td>60-200</td>
+                                <td class="coluna-destaque">&gt;20%</td>
+                                <td class="coluna-destaque">25%</td>
+                                <td>&gt;40%</td>
+                                <td>25%</td>
+                                <td>200%</td>
+                                <td>100%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
         </div>
     </div>
-    </div>
-    </body>
-    <script src="./script.js" type="module"></script>
-    <script src="./acessos.js" type="module"></script>
-    </html>
-
+</body>
+<script src="./script.js"></script>
+</html>
