@@ -84,8 +84,6 @@ function findHoraFinal(dadosDaAPI, tabelaProcurada, horaInicialProcurada) {
 }
 
 const linhaInput = document.getElementById('linha');
-const tabelaInput = document.getElementById('tabela');
-const horaInicialInput = document.getElementById('hora-inicial');
 const calcularButton = document.getElementById('calcular');
 const limparButton = document.getElementById('limpar');
 const tabelaSelect = document.getElementById('tabela-select');
@@ -189,30 +187,37 @@ calcularButton.addEventListener('click', async () => {
 
     let params = {};
     
-    // ATUALIZAÇÃO DA REGRA: Imagem Ref. 01/06/2026
+    // Configuração dos parâmetros (Regra de 01/06/2026 + Distorção de Adiantamento adicionada)
     if (tempoViagem >= 0 && tempoViagem <= 30) {
-        params = { adiantamento: 40, atraso25: 100, atraso100: 200 };
+        params = { adiantamento: 40, distorcao: 200, atraso25: 100, atraso100: 200 };
     } else if (tempoViagem > 30 && tempoViagem <= 60) {
-        params = { adiantamento: 28, atraso25: 80, atraso100: 200 };
+        params = { adiantamento: 28, distorcao: 200, atraso25: 80, atraso100: 200 };
     } else if (tempoViagem > 60 && tempoViagem <= 200) {
-        params = { adiantamento: 20, atraso25: 40, atraso100: 200 };
+        params = { adiantamento: 20, distorcao: 200, atraso25: 40, atraso100: 200 };
     } else {
         alert('Tempo de viagem fora do intervalo de 0 a 200 minutos.');
         return;
     }
 
+    // Cálculos dos limites em minutos
     const adiantamentoLimiteMin = Math.round(tempoViagem * (params.adiantamento / 100));
+    const distorcaoLimiteMin = Math.round(tempoViagem * (params.distorcao / 100));
     const atraso25LimiteMin = (params.atraso25 !== null) ? Math.round(tempoViagem * (params.atraso25 / 100)) : null;
     const atraso100LimiteMin = Math.round(tempoViagem * (params.atraso100 / 100));
 
+    // Adiantamento (Subtrai da hora de referência)
     const saidaAdiantamento = horaInicial - adiantamentoLimiteMin;
     const chegadaAdiantamento = parseHM(horaFinal) - adiantamentoLimiteMin;
     
+    const saidaAdiantamentoDist = horaInicial - distorcaoLimiteMin;
+    const chegadaAdiantamentoDist = parseHM(horaFinal) - distorcaoLimiteMin;
+    
+    // Atraso (Soma na hora de referência)
     const saidaAtraso25 = (atraso25LimiteMin !== null) ? horaInicial + atraso25LimiteMin : null;
     const chegadaAtraso25 = (atraso25LimiteMin !== null) ? parseHM(horaFinal) + atraso25LimiteMin : null;
     
     const saidaAtraso100 = horaInicial + atraso100LimiteMin;
-    const chegadaAtraso100 = parseHM(horaFinal) + atraso100LimiteMin;
+    const llegadaAtraso100 = parseHM(horaFinal) + atraso100LimiteMin;
 
     document.querySelectorAll('.sub-category input').forEach(input => input.value = '');
     
@@ -220,23 +225,29 @@ calcularButton.addEventListener('click', async () => {
         document.getElementById('saida-0-30-25').value = fmtHM(saidaAtraso25);
         document.getElementById('chegada-0-30-25').value = fmtHM(chegadaAtraso25);
         document.getElementById('saida-0-30-100').value = fmtHM(saidaAtraso100);
-        document.getElementById('chegada-0-30-100').value = fmtHM(chegadaAtraso100);
+        document.getElementById('chegada-0-30-100').value = fmtHM(llegadaAtraso100);
         document.getElementById('saida-0-30-ad').value = fmtHM(saidaAdiantamento);
         document.getElementById('chegada-0-30-ad').value = fmtHM(chegadaAdiantamento);
+        document.getElementById('saida-0-30-ad-dist').value = fmtHM(saidaAdiantamentoDist);
+        document.getElementById('chegada-0-30-ad-dist').value = fmtHM(chegadaAdiantamentoDist);
     } else if (tempoViagem > 30 && tempoViagem <= 60) {
         document.getElementById('saida-31-60-25').value = fmtHM(saidaAtraso25);
         document.getElementById('chegada-31-60-25').value = fmtHM(chegadaAtraso25);
         document.getElementById('saida-31-60-100').value = fmtHM(saidaAtraso100);
-        document.getElementById('chegada-31-60-100').value = fmtHM(chegadaAtraso100);
+        document.getElementById('chegada-31-60-100').value = fmtHM(llegadaAtraso100);
         document.getElementById('saida-31-60-ad').value = fmtHM(saidaAdiantamento);
         document.getElementById('chegada-31-60-ad').value = fmtHM(chegadaAdiantamento);
+        document.getElementById('saida-31-60-ad-dist').value = fmtHM(saidaAdiantamentoDist);
+        document.getElementById('chegada-31-60-ad-dist').value = fmtHM(chegadaAdiantamentoDist);
     } else if (tempoViagem > 60 && tempoViagem <= 200) {
         document.getElementById('saida-61-200-25').value = fmtHM(saidaAtraso25);
         document.getElementById('chegada-61-200-25').value = fmtHM(chegadaAtraso25);
         document.getElementById('saida-61-200-100').value = fmtHM(saidaAtraso100);
-        document.getElementById('chegada-61-200-100').value = fmtHM(chegadaAtraso100);
+        document.getElementById('chegada-61-200-100').value = fmtHM(llegadaAtraso100);
         document.getElementById('saida-61-200-ad').value = fmtHM(saidaAdiantamento);
         document.getElementById('chegada-61-200-ad').value = fmtHM(chegadaAdiantamento);
+        document.getElementById('saida-61-200-ad-dist').value = fmtHM(saidaAdiantamentoDist);
+        document.getElementById('chegada-61-200-ad-dist').value = fmtHM(chegadaAdiantamentoDist);
     }
 });
 
