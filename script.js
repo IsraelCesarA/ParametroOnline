@@ -64,23 +64,26 @@ function xmlParaObjeto(xmlTexto) {
     return converterNo(raiz);
 }
 
-// ==================== 1. BUSCA LISTA DE LINHAS (NOVA API JSON) ====================
+// ==================== 1. BUSCA LISTA DE LINHAS (COM PROXY PARA EVITAR CORS) ====================
 async function carregarListaLinhas() {
-    const url = "https://info-bus-fortaleza.vercel.app/api/linhas";
+    const urlOriginal = "https://info-bus-fortaleza.vercel.app/api/linhas";
+    // Usa o mesmo proxy da ETUFOR para contornar bloqueio CORS
+    const url = `https://api.allorigins.win/raw?url=${encodeURIComponent(urlOriginal)}`;
+    
     try {
         const response = await fetch(url);
-        if (!response.ok) throw new Error(`Erro na lista de linhas: ${response.status}`);
+        if (!response.ok) throw new Error(`Erro: ${response.status} ${response.statusText}`);
         const linhas = await response.json();
-        console.log("Lista de linhas carregada:", linhas);
+        console.log("✅ Lista de linhas carregada com sucesso:", linhas.length, "linhas");
         return linhas;
     } catch (error) {
         console.error("❌ Falha ao carregar linhas:", error);
-        alert("Não foi possível carregar a lista de linhas. Tente novamente mais tarde.");
-        return [];
+        alert("Não foi possível carregar a lista de referência — a busca por horários funcionará normalmente se o número da linha for válido.");
+        return []; // Retorna lista vazia para não travar o sistema
     }
 }
 
-// ==================== 2. BUSCA HORÁRIOS NA API DA ETUFOR (XML) ====================
+// ==================== 2. BUSCA HORÁRIOS NA API DA ETUFOR ====================
 async function fetchHorariosFromAPI(linha) {
     const data = getFormattedDate();
     const urlBaseEtufor = `http://gistapis.etufor.ce.gov.br:8081/api/programacaoDia/${data}?linha=${linha}`;
@@ -88,18 +91,17 @@ async function fetchHorariosFromAPI(linha) {
 
     try {
         const response = await fetch(url, {
-            method: 'GET',
             headers: { 'Accept': 'application/xml, text/xml, */*' }
         });
-
         if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
+        
         const xmlTexto = await response.text();
         const dadosXml = xmlParaObjeto(xmlTexto);
         return dadosXml?.ArrayOfProgramacao?.programacao;
 
     } catch (error) {
         console.error("❌ Falha na busca de horários:", error);
-        alert("Erro ao buscar horários da linha. Verifique o número e tente novamente.");
+        alert("Erro ao buscar horários — verifique o número da linha e tente novamente.");
         return null;
     }
 }
@@ -136,10 +138,9 @@ const horaInicialSelect = document.getElementById('hora-inicial-select');
 let dadosDaAPI = null;
 let listaLinhas = [];
 
-// Carrega lista de linhas ao abrir a página
+// Carrega lista ao abrir a página
 document.addEventListener('DOMContentLoaded', async () => {
     listaLinhas = await carregarListaLinhas();
-    console.log("Digite o número da linha (ex: 4, 11, 45)");
 });
 
 // ==================== EVENTOS ====================
@@ -151,43 +152,43 @@ linhaInput.addEventListener('keydown', (e) => {
 });
 
 linhaInput.addEventListener('blur', async () => {
-    const linha = Number(linhaInput.value.trim());
-    if (isNaN(linha)) {
-        alert("Digite um número de linha válido.");
+    const valorLinha = linhaInput.value.trim();
+    const linha = Number(valorLinha);
+
+    // Valida apenas formato numérico
+    if (isNaN(linha) || linha <= 0) {
+        alert("Digite um número de linha válido (ex: 4, 11, 45).");
         clearInputFields();
         return;
     }
 
-    // Valida se a linha existe na lista
-    const linhaExiste = listaLinhas.some(item => item.numero === linha);
-    if (!linhaExiste) {
-        alert(`Linha ${linha} não encontrada na lista de linhas de Fortaleza.`);
-        clearInputFields();
-        return;
-    }
-
-    // Busca horários
+    // Busca horários diretamente — não depende da lista de referência
     const programacao = await fetchHorariosFromAPI(linha);
     dadosDaAPI = programacao;
 
-    if (programacao) {
-        while (tabelaSelect.options.length > 1) tabelaSelect.options[1].remove();
-        while (horaInicialSelect.options.length > 1) horaInicialSelect.options[1].remove();
-        horaInicialSelect.disabled = true;
-
-        const quadro = programacao.quadro;
-        let tabelas = quadro.tabelas.tabela;
-        if (!Array.isArray(tabelas)) tabelas = [tabelas];
-
-        tabelas.sort((a, b) => Number(a.numero) - Number(b.numero));
-        tabelas.forEach(tabela => {
-            const option = document.createElement('option');
-            option.value = tabela.numero;
-            option.textContent = `Tabela ${tabela.numero}`;
-            tabelaSelect.appendChild(option);
-        });
-        tabelaSelect.disabled = false;
+    if (!programacao) {
+        alert(`Nenhum horário encontrado para a linha ${linha}. Verifique o número.`);
+        clearInputFields();
+        return;
     }
+
+    // Preenche tabelas
+    while (tabelaSelect.options.length > 1) tabelaSelect.options[1].remove();
+    while (horaInicialSelect.options.length > 1) horaInicialSelect.options[1].remove();
+    horaInicialSelect.disabled = true;
+
+    const quadro = programacao.quadro;
+    let tabelas = quadro.tabelas.tabela;
+    if (!Array.isArray(tabelas)) tabelas = [tabelas];
+
+    tabelas.sort((a, b) => Number(a.numero) - Number(b.numero));
+    tabelas.forEach(tabela => {
+        const option = document.createElement('option');
+        option.value = tabela.numero;
+        option.textContent = `Tabela ${tabela.numero}`;
+        tabelaSelect.appendChild(option);
+    });
+    tabelaSelect.disabled = false;
 });
 
 tabelaSelect.addEventListener('change', (e) => {
@@ -223,13 +224,13 @@ calcularButton.addEventListener('click', () => {
     const horaInicialInputVal = horaInicialSelect.value;
 
     if (!linha || !tabela || !horaInicialInputVal) {
-        alert('Preencha Linha, Tabela e Hora Inicial.');
+        alert('Preencha todos os campos: Linha, Tabela e Hora Inicial.');
         return;
     }
 
     const horaFinal = findHoraFinal(dadosDaAPI, tabela, horaInicialInputVal);
     if (!horaFinal) {
-        alert('Horário não encontrado. Verifique os dados.');
+        alert('Horário correspondente não encontrado nos dados.');
         return;
     }
 
@@ -240,14 +241,14 @@ calcularButton.addEventListener('click', () => {
     document.getElementById('hora-final').value = horaFinal;
     document.getElementById('tempo-viagem').innerText = tempoViagem;
 
-    // Parâmetros oficiais 01/06/2026
+    // Parâmetros oficiais atualizados em 01/06/2026
     let params;
     if (tempoViagem <= 30) params = { adiantamento: 40, distorcao: 200, atraso25: 100, atraso100: 200 };
     else if (tempoViagem <= 60) params = { adiantamento: 28, distorcao: 200, atraso25: 80, atraso100: 200 };
     else if (tempoViagem <= 200) params = { adiantamento: 20, distorcao: 200, atraso25: 40, atraso100: 200 };
-    else { alert('Tempo de viagem fora do limite (0-200 min).'); return; }
+    else { alert('Tempo de viagem fora do intervalo permitido (0 a 200 minutos).'); return; }
 
-    // Cálculos
+    // Cálculos dos limites
     const adiantamentoLimiteMin = Math.round(tempoViagem * params.adiantamento / 100);
     const distorcaoLimiteMin = Math.round(tempoViagem * params.distorcao / 100);
     const atraso25LimiteMin = Math.round(tempoViagem * params.atraso25 / 100);
@@ -264,7 +265,7 @@ calcularButton.addEventListener('click', () => {
 
     document.querySelectorAll('.sub-category input').forEach(input => input.value = '');
 
-    // Preenche resultados
+    // Preenche resultados conforme intervalo
     if (tempoViagem <= 30) {
         document.getElementById('saida-0-30-25').value = fmtHM(saidaAtraso25);
         document.getElementById('chegada-0-30-25').value = fmtHM(chegadaAtraso25);
