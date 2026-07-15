@@ -8,7 +8,7 @@
 }
 body {
     margin: 0;
-    padding: 10px; /* Reduzido para ganhar espaço de tela */
+    padding: 10px;
     font-family: Arial, sans-serif;
     background: #e0e0e0;
     color: #333;
@@ -17,7 +17,7 @@ body {
 }
 .container {
     width: 100%;
-    max-width: 1100px; /* Levemente alargado para acomodar bem os 4 quadros menores */
+    max-width: 1100px;
     height: fit-content;
     background: var(--card-bg);
     border: 1px solid var(--border-color);
@@ -28,7 +28,7 @@ header {
     color: var(--text-light);
     display: flex;
     align-items: center;
-    padding: 8px 15px; /* Mais compacto */
+    padding: 8px 15px;
 }
 .header-left, .header-right {
     flex: 1;
@@ -52,7 +52,7 @@ header {
 }
 
 .header-title {
-    font-size: 20px; /* Reduzido levemente */
+    font-size: 20px;
     font-weight: bold;
     display: flex;
     align-items: center;
@@ -63,13 +63,13 @@ header {
     margin: 5px 0 0 0;
 }
 .sindionibus-logo {
-    height: 35px; /* Reduzido levemente */
+    height: 35px;
 }
 .header-right {
     text-align: right;
 }
 .main-content {
-    padding: 15px; /* Reduzido */
+    padding: 15px;
 }
 .input-section {
     display: flex;
@@ -89,10 +89,16 @@ header {
     font-weight: bold;
     font-size: 13px;
 }
-.input-group input {
-    width: 75px;
+/* Suporta tanto o input text tradicional quanto os inputs de time/select */
+.input-group input, .input-group select {
+    width: 80px;
     padding: 4px;
     border: 1px solid var(--border-color);
+    box-sizing: border-box;
+}
+/* Ajuste específico para garantir largura idêntica nos campos de hora manual na contingência */
+.input-group input[type="time"] {
+    width: 95px; 
 }
 .calc-button {
     padding: 6px 18px;
@@ -121,14 +127,14 @@ header {
 .sections-grid {
     display: grid;
     grid-template-columns: 1fr 1fr; 
-    gap: 15px; /* Espaço entre as colunas reduzido */
+    gap: 15px;
 }
 .atrasos-section {
     border-right: 2px solid var(--line-color);
     padding-right: 15px;
 }
 .category {
-    margin-top: 10px; /* Margem reduzida para grudar mais os blocos */
+    margin-top: 10px;
 }
 .category-title {
     font-weight: bold;
@@ -138,14 +144,14 @@ header {
 }
 .category-content {
     display: flex;
-    flex-wrap: nowrap; /* FORÇA os quadros a ficarem lado a lado */
-    gap: 10px; /* Reduzido para caber melhor na tela */
+    flex-wrap: nowrap; 
+    gap: 10px;
 }
 .sub-category {
     flex: 1;
-    min-width: 0; /* Remove a trava que quebrava a linha */
+    min-width: 0; 
     border: 1px solid var(--border-color);
-    padding: 6px 8px; /* Mais compacto internamente */
+    padding: 6px 8px; 
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -155,7 +161,7 @@ header {
     font-weight: bold;
     text-align: center;
     margin-bottom: 6px;
-    font-size: 10px; /* Fonte menor para caber textos longos (ex: Distorção) */
+    font-size: 10px; 
 }
 .sub-category label {
     font-size: 10px;
@@ -171,7 +177,7 @@ header {
     margin-bottom: 4px;
 }
 .sub-category input:last-child {
-    margin-bottom: 0; /* Tira a margem do último input para enxugar espaço */
+    margin-bottom: 0;
 }
 .button-group{
     display: flex;
@@ -181,12 +187,12 @@ header {
     gap: 10px;
 }
 .select-input{
-    max-width: 100px;
+    width: 90px !important;
 }
 
 /* --- ESTILOS DA TABELA DE PARÂMETROS --- */
 .tabela-parametros-container {
-    margin-top: 25px; /* Margem reduzida */
+    margin-top: 25px; 
     padding-top: 15px;
     border-top: 2px solid var(--line-color);
 }
@@ -209,7 +215,7 @@ header {
     border: 1px solid var(--border-color);
 }
 .tabela-parametros th, .tabela-parametros td {
-    padding: 6px; /* Tabelas mais estreitas */
+    padding: 6px; 
     border: 1px solid var(--border-color);
 }
 .tabela-parametros th {
@@ -228,7 +234,7 @@ header {
 
 @media (max-width: 768px) {
     .sections-grid {
-        grid-template-columns: 1fr; /* Em telas menores (celular) ele empilha tudo */
+        grid-template-columns: 1fr; 
     }
     .atrasos-section {
         border-right: none;
@@ -273,6 +279,6 @@ header {
         font-size: 12px;
     }
     .category-content {
-        flex-direction: column; /* No celular bem pequeno os quadros ficam um em cima do outro */
+        flex-direction: column; 
     }
 }
