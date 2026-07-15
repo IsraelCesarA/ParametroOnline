@@ -41,35 +41,78 @@ function getFormattedDate() {
     return `${year}${month}${day}`;
 }
 
-// ==================== BUSCA DE DADOS NA API (CORRIGIDA) ====================
+// ==================== FUNÇÃO AUXILIAR: CONVERSÃO XML PARA OBJETO ====================
+function xmlParaObjeto(xmlTexto) {
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(xmlTexto, "text/xml");
+    
+    // Função recursiva para converter nós XML em objeto JS
+    function converterNo(no) {
+        const objeto = {};
+        const filhos = no.children;
+
+        // Se não tem filhos, retorna o valor do texto
+        if (filhos.length === 0) return no.textContent.trim();
+
+        // Agrupa elementos repetidos em arrays
+        for (let i = 0; i < filhos.length; i++) {
+            const filho = filhos[i];
+            const nome = filho.tagName;
+
+            if (objeto[nome]) {
+                if (!Array.isArray(objeto[nome])) {
+                    objeto[nome] = [objeto[nome]];
+                }
+                objeto[nome].push(converterNo(filho));
+            } else {
+                objeto[nome] = converterNo(filho);
+            }
+        }
+        return objeto;
+    }
+
+    // Extrai o conteúdo principal de <ArrayOfProgramacao>
+    const raiz = xmlDoc.documentElement;
+    return converterNo(raiz);
+}
+
+// ==================== BUSCA DE DADOS NA API (AJUSTADO PARA XML) ====================
 async function fetchHorariosFromAPI(linha) {
     const data = getFormattedDate();
     const urlBaseEtufor = `http://gistapis.etufor.ce.gov.br:8081/api/programacaoDia/${data}?linha=${linha}`;
     
-    // ✅ Sintaxe correta do CORS Proxy com parâmetro explícito
+    // Use o proxy que funcionar melhor — troque se precisar
     const url = `https://corsproxy.io/?url=${encodeURIComponent(urlBaseEtufor)}`;
-    console.log("URL da requisição:", url); // Log para depuração
+    console.log("URL da requisição:", url);
 
     try {
         const response = await fetch(url, {
             method: 'GET',
-            headers: { 'Accept': 'application/json' },
+            headers: { 'Accept': 'application/xml, text/xml, */*' },
             mode: 'cors'
         });
 
         if (!response.ok) throw new Error(`Erro HTTP: ${response.status} - ${response.statusText}`);
-        const dados = await response.json();
-        console.log("Dados recebidos da API:", dados);
+        
+        // ✅ LÊ COMO TEXTO E CONVERTE XML PARA OBJETO
+        const xmlTexto = await response.text();
+        const dadosXml = xmlParaObjeto(xmlTexto);
+        console.log("Dados XML convertidos:", dadosXml);
+
+        // Acessa a estrutura correta conforme a resposta que você mostrou
+        const dados = dadosXml?.ArrayOfProgramacao?.programacao;
         return dados;
 
     } catch (error) {
-        console.error("❌ Falha na requisição:", error);
+        console.error("❌ Falha na requisição ou leitura:", error);
         let mensagemErro = "Erro ao buscar horários na API.";
         
         if (error.message.includes('ERR_CERT') || error.message.includes('certificado')) {
-            mensagemErro += "\nMotivo: Problema de segurança no acesso ao servidor.\nSugestão: Tente novamente mais tarde.";
+            mensagemErro += "\nMotivo: Problema de segurança no acesso ao servidor.";
         } else if (error.message.includes('Failed to fetch')) {
             mensagemErro += "\nMotivo: Servidor indisponível ou bloqueado.";
+        } else if (error.message.includes('XML')) {
+            mensagemErro += "\nMotivo: Formato de dados inválido recebido do servidor.";
         }
 
         alert(mensagemErro);
@@ -77,20 +120,30 @@ async function fetchHorariosFromAPI(linha) {
     }
 }
 
-// ==================== LOCALIZAÇÃO DO HORÁRIO FINAL ====================
+// ==================== LOCALIZAÇÃO DO HORÁRIO FINAL (AJUSTADO PARA ESTRUTURA XML) ====================
 function findHoraFinal(dadosDaAPI, tabelaProcurada, horaInicialProcurada) {
-    if (!dadosDaAPI || dadosDaAPI.Message) return null;
-    const tabelas = dadosDaAPI.quadro.tabelas;
+    if (!dadosDaAPI) return null;
+    
+    // Acessa quadro -> tabelas (pode ser objeto único ou array)
+    const quadro = dadosDaAPI.quadro;
+    let tabelas = quadro.tabelas.tabela;
+    if (!Array.isArray(tabelas)) tabelas = [tabelas]; // Trata caso só tenha 1 tabela
 
     for (const tabela of tabelas) {
         const numeroTabelaApi = String(tabela.numero).trim().toUpperCase();
         const numeroTabelaInput = String(tabelaProcurada).trim().toUpperCase();
 
         if (numeroTabelaApi === numeroTabelaInput) {
-            for (const trecho of tabela.trechos) {
-                const horaInicial = trecho.inicio.horario.slice(trecho.inicio.horario.indexOf('T') + 1, trecho.inicio.horario.length - 3);
+            let trechos = tabela.trechos.trecho;
+            if (!Array.isArray(trechos)) trechos = [trechos]; // Trata caso só tenha 1 trecho
+
+            for (const trecho of trechos) {
+                const horarioCompleto = trecho.inicio.horario;
+                const horaInicial = horarioCompleto.slice(horarioCompleto.indexOf('T') + 1, horarioCompleto.length - 3);
+                
                 if (horaInicial === horaInicialProcurada) {
-                    return trecho.fim.horario.slice(trecho.fim.horario.indexOf('T') + 1, trecho.fim.horario.length - 3);
+                    const horarioFimCompleto = trecho.fim.horario;
+                    return horarioFimCompleto.slice(horarioFimCompleto.indexOf('T') + 1, horarioFimCompleto.length - 3);
                 }
             }
         }
@@ -127,8 +180,13 @@ linhaInput.addEventListener('blur', async () => {
             while (horaInicialSelect.options.length > 1) horaInicialSelect.options[1].remove();
             horaInicialSelect.disabled = true;
 
-            // Adiciona tabelas ordenadas
-            const numerosTabelas = programacao.quadro.tabelas.map(t => t.numero).sort((a, b) => a - b);
+            // Carrega tabelas da estrutura XML
+            const quadro = programacao.quadro;
+            let tabelas = quadro.tabelas.tabela;
+            if (!Array.isArray(tabelas)) tabelas = [tabelas];
+
+            // Ordena tabelas por número
+            const numerosTabelas = tabelas.map(t => t.numero).sort((a, b) => Number(a) - Number(b));
             numerosTabelas.forEach(numeroTabela => {
                 const option = document.createElement('option');
                 option.value = numeroTabela;
@@ -147,10 +205,20 @@ tabelaSelect.addEventListener('change', (e) => {
         horaInicialSelect.disabled = false;
         while (horaInicialSelect.options.length > 1) horaInicialSelect.options[1].remove();
 
-        const trechos = dadosDaAPI.quadro.tabelas.find(t => t.numero == tabelaSelecionada).trechos;
+        // Busca trechos da tabela selecionada
+        const quadro = dadosDaAPI.quadro;
+        let tabelas = quadro.tabelas.tabela;
+        if (!Array.isArray(tabelas)) tabelas = [tabelas];
+        const tabela = tabelas.find(t => String(t.numero) === String(tabelaSelecionada));
+
+        let trechos = tabela.trechos.trecho;
+        if (!Array.isArray(trechos)) trechos = [trechos];
+
+        // Ordena horários corretamente
         const horariosOrdenados = trechos
             .map(trecho => {
-                const horario = trecho.inicio.horario.slice(trecho.inicio.horario.indexOf('T') + 1, trecho.inicio.horario.length - 3);
+                const horarioCompleto = trecho.inicio.horario;
+                const horario = horarioCompleto.slice(horarioCompleto.indexOf('T') + 1, horarioCompleto.length - 3);
                 const posto = trecho.inicio.postoControle.trim();
                 return { horario, posto };
             })
