@@ -42,8 +42,12 @@ function getFormattedDate() {
 
 async function fetchHorariosFromAPI(linha) {
     const data = getFormattedDate();
-    // NOVA URL DA API APLICADA AQUI:
-    const url = `http://gistapis.etufor.ce.gov.br:8081/api/programacaoDia/${data}?linha=${linha}`;
+    
+    // URL original HTTP que causa o erro de Mixed Content
+    const urlBaseEtufor = `http://gistapis.etufor.ce.gov.br:8081/api/programacaoDia/${data}?linha=${linha}`;
+    
+    // Solução para o erro de Mixed Content: Requisição encapsulada via HTTPS através do CORS Proxy
+    const url = `https://corsproxy.io/?${encodeURIComponent(urlBaseEtufor)}`;
     
     try {
         const response = await fetch(url);
@@ -105,15 +109,15 @@ linhaInput.addEventListener('blur', async () => {
         dadosDaAPI = programacao;
         if (programacao) {
             if(tabelaSelect.options.length > 1) {
-            while (tabelaSelect.options.length > 1) {
-                tabelaSelect.options[1].remove();
-            }
+                while (tabelaSelect.options.length > 1) {
+                    tabelaSelect.options[1].remove();
+                }
             }
             if(horaInicialSelect.options.length > 1) {
-            while (horaInicialSelect.options.length > 1) {
-                horaInicialSelect.options[1].remove();
-            }
-            horaInicialSelect.disabled = true;
+                while (horaInicialSelect.options.length > 1) {
+                    horaInicialSelect.options[1].remove();
+                }
+                horaInicialSelect.disabled = true;
             }
 
             for(let tabela of programacao.quadro.tabelas) {
@@ -188,6 +192,7 @@ calcularButton.addEventListener('click', async () => {
 
     let params = {};
     
+    // Parâmetros oficiais atualizados em 01/06/2026
     if (tempoViagem >= 0 && tempoViagem <= 30) {
         params = { adiantamento: 40, distorcao: 200, atraso25: 100, atraso100: 200 };
     } else if (tempoViagem > 30 && tempoViagem <= 60) {
@@ -204,17 +209,18 @@ calcularButton.addEventListener('click', async () => {
     const atraso25LimiteMin = (params.atraso25 !== null) ? Math.round(tempoViagem * (params.atraso25 / 100)) : null;
     const atraso100LimiteMin = Math.round(tempoViagem * (params.atraso100 / 100));
 
+    // Cálculos dos adiantamentos (Subtrações)
     const saidaAdiantamento = horaInicial - adiantamentoLimiteMin;
     const chegadaAdiantamento = parseHM(horaFinal) - adiantamentoLimiteMin;
     
     const saidaAdiantamentoDist = horaInicial - distorcaoLimiteMin;
     const chegadaAdiantamentoDist = parseHM(horaFinal) - distorcaoLimiteMin;
     
+    // Cálculos dos atrasos (Somas)
     const saidaAtraso25 = (atraso25LimiteMin !== null) ? horaInicial + atraso25LimiteMin : null;
     const chegadaAtraso25 = (atraso25LimiteMin !== null) ? parseHM(horaFinal) + atraso25LimiteMin : null;
     
     const saidaAtraso100 = horaInicial + atraso100LimiteMin;
-    // CORRIGIDO: de llegadaAtraso100 para chegadaAtraso100
     const chegadaAtraso100 = parseHM(horaFinal) + atraso100LimiteMin;
 
     document.querySelectorAll('.sub-category input').forEach(input => input.value = '');
