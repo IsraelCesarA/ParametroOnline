@@ -1,278 +1,168 @@
-// ==================== FUNÇÕES AUXILIARES ====================
-function parseHM(s) {
-    if (!s) return null;
-    const [hh, mm] = s.split(':').map(Number);
-    return hh * 60 + mm;
-}
+document.addEventListener('DOMContentLoaded', () => {
 
-function fmtHM(minutos) {
-    const total = ((Math.round(minutos) % (24 * 60)) + (24 * 60)) % (24 * 60);
-    const hh = String(Math.floor(total / 60)).padStart(2, '0');
-    const mm = String(total % 60).padStart(2, '0');
-    return `${hh}:${mm}`;
-}
-
-function clearFields() {
-    document.getElementById('tempo-viagem').innerText = '...';
-    document.getElementById('hora-final').value = '';
-    const inputs = document.querySelectorAll('.sub-category input');
-    inputs.forEach(input => input.value = '');
-}
-
-function clearInputFields() {
-    document.getElementById('linha').value = '';
-    document.getElementById('tabela-select').value = '';
-    document.getElementById('hora-inicial-select').value = '';
-    document.getElementById('tabela-select').disabled = true;
-    document.getElementById('hora-inicial-select').disabled = true;
-    while (tabelaSelect.options.length > 1) tabelaSelect.options[1].remove();
-    while (horaInicialSelect.options.length > 1) horaInicialSelect.options[1].remove();
-}
-
-function getFormattedDate() {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
-    return `${year}${month}${day}`;
-}
-
-// ==================== CONVERSÃO XML PARA OBJETO ====================
-function xmlParaObjeto(xmlTexto) {
-    const parser = new DOMParser();
-    const xmlDoc = parser.parseFromString(xmlTexto, "text/xml");
-
-    function converterNo(no) {
-        const objeto = {};
-        const filhos = no.children;
-        if (filhos.length === 0) return no.textContent.trim();
-
-        for (let i = 0; i < filhos.length; i++) {
-            const filho = filhos[i];
-            const nome = filho.tagName;
-            if (objeto[nome]) {
-                if (!Array.isArray(objeto[nome])) objeto[nome] = [objeto[nome]];
-                objeto[nome].push(converterNo(filho));
-            } else {
-                objeto[nome] = converterNo(filho);
-            }
-        }
-        return objeto;
+    // Função auxiliar: Converte string "HH:MM" para minutos totais
+    function parseHM(s) {
+        if (!s) return null;
+        const [hh, mm] = s.split(':').map(Number);
+        return hh * 60 + mm;
     }
 
-    const raiz = xmlDoc.documentElement;
-    return converterNo(raiz);
-}
+    // Função auxiliar: Converte minutos totais de volta para "HH:MM"
+    function fmtHM(minutos) {
+        if (minutos === null || isNaN(minutos)) return '';
+        const total = ((Math.round(minutos) % (24 * 60)) + (24 * 60)) % (24 * 60);
+        const hh = String(Math.floor(total / 60)).padStart(2, '0');
+        const mm = String(total % 60).padStart(2, '0');
+        return `${hh}:${mm}`;
+    }
 
-// ==================== BUSCA HORÁRIOS NA API DA ETUFOR (COM PROXY CONFIÁVEL) ====================
-async function fetchHorariosFromAPI(linha) {
-    const data = getFormattedDate();
-    const urlBaseEtufor = `http://gistapis.etufor.ce.gov.br:8081/api/programacaoDia/${data}?linha=${linha}`;
-    
-    // ✅ Proxy mais estável para GitHub Pages
-    const url = `https://corsproxy.io/?${encodeURIComponent(urlBaseEtufor)}`;
+    // Limpa apenas os resultados da tela
+    function clearFields() {
+        document.getElementById('tempo-viagem').innerText = '...';
+        const inputs = document.querySelectorAll('.sub-category input');
+        inputs.forEach(input => input.value = '');
+    }
 
-    try {
-        const response = await fetch(url, {
-            method: 'GET',
-            headers: { 
-                'Accept': 'application/xml, text/xml, */*',
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            mode: 'cors'
+    // Limpa os campos de digitação
+    function clearInputFields() {
+        if(document.getElementById('linha')) document.getElementById('linha').value = '';
+        if(document.getElementById('tabela')) document.getElementById('tabela').value = '';
+        if(document.getElementById('hora-inicial')) document.getElementById('hora-inicial').value = '';
+        if(document.getElementById('hora-final')) document.getElementById('hora-final').value = '';
+    }
+
+    // Pega os botões na tela
+    const calcularButton = document.getElementById('calcular');
+    const limparButton = document.getElementById('limpar');
+
+    // Mapeamento de atalhos do teclado (Avançar com a tecla Enter)
+    const linhaInput = document.getElementById('linha');
+    const tabelaInput = document.getElementById('tabela');
+    const horaInicialInput = document.getElementById('hora-inicial');
+    const horaFinalInput = document.getElementById('hora-final');
+
+    if (linhaInput) {
+        linhaInput.addEventListener('keydown', (e) => { 
+            if (e.key === 'Enter') { e.preventDefault(); if(tabelaInput) tabelaInput.focus(); } 
         });
-
-        if (!response.ok) throw new Error(`Servidor retornou erro: ${response.status}`);
-        const xmlTexto = await response.text();
-        const dadosXml = xmlParaObjeto(xmlTexto);
-        return dadosXml?.ArrayOfProgramacao?.programacao;
-
-    } catch (error) {
-        console.error("❌ Falha na requisição:", error);
-        alert(`Não foi possível carregar os horários.\nVerifique o número da linha ou tente novamente mais tarde.\nDetalhe: ${error.message}`);
-        return null;
     }
-}
+    if (tabelaInput) {
+        tabelaInput.addEventListener('keydown', (e) => { 
+            if (e.key === 'Enter') { e.preventDefault(); if(horaInicialInput) horaInicialInput.focus(); } 
+        });
+    }
+    if (horaInicialInput) {
+        horaInicialInput.addEventListener('keydown', (e) => { 
+            if (e.key === 'Enter') { e.preventDefault(); if(horaFinalInput) horaFinalInput.focus(); } 
+        });
+    }
+    if (horaFinalInput) {
+        horaFinalInput.addEventListener('keydown', (e) => { 
+            if (e.key === 'Enter') { e.preventDefault(); if(calcularButton) calcularButton.click(); } 
+        });
+    }
 
-// ==================== LOCALIZAÇÃO DO HORÁRIO FINAL ====================
-function findHoraFinal(dadosDaAPI, tabelaProcurada, horaInicialProcurada) {
-    if (!dadosDaAPI) return null;
-    const quadro = dadosDaAPI.quadro;
-    let tabelas = quadro.tabelas.tabela;
-    if (!Array.isArray(tabelas)) tabelas = [tabelas];
+    // -------------------------------------------------------------
+    // EVENTO PRINCIPAL: CLIQUE NO BOTÃO CALCULAR
+    // -------------------------------------------------------------
+    if (calcularButton) {
+        calcularButton.addEventListener('click', () => {
+            clearFields();
 
-    for (const tabela of tabelas) {
-        if (String(tabela.numero).trim() !== String(tabelaProcurada).trim()) continue;
-        
-        let trechos = tabela.trechos.trecho;
-        if (!Array.isArray(trechos)) trechos = [trechos];
+            const horaInicialInputVal = document.getElementById('hora-inicial').value;
+            const horaFinalInputVal = document.getElementById('hora-final').value;
 
-        for (const trecho of trechos) {
-            const horaInicial = trecho.inicio.horario.split('T')[1].slice(0, 5);
-            if (horaInicial === horaInicialProcurada) {
-                return trecho.fim.horario.split('T')[1].slice(0, 5);
+            // Bloqueia e avisa se estiver vazio
+            if (!horaInicialInputVal || !horaFinalInputVal) {
+                alert('Por favor, preencha a Hora Inicial e a Hora Final.');
+                return;
             }
-        }
-    }
-    return null;
-}
 
-// ==================== VARIÁVEIS E EVENTOS ====================
-const linhaInput = document.getElementById('linha');
-const calcularButton = document.getElementById('calcular');
-const limparButton = document.getElementById('limpar');
-const tabelaSelect = document.getElementById('tabela-select');
-const horaInicialSelect = document.getElementById('hora-inicial-select');
-let dadosDaAPI = null;
+            const horaInicial = parseHM(horaInicialInputVal);
+            const horaFinal = parseHM(horaFinalInputVal);
+            
+            // Calcula tempo de viagem
+            let tempoViagem = horaFinal - horaInicial;
+            if (tempoViagem < 0) {
+                tempoViagem += 24 * 60; // Ajusta se virou a meia-noite
+            }
 
-linhaInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-        e.preventDefault();
-        tabelaSelect.focus();
-    }
-});
+            // Mostra o resultado do tempo de viagem
+            document.getElementById('tempo-viagem').innerText = tempoViagem;
 
-linhaInput.addEventListener('blur', async () => {
-    const valorLinha = linhaInput.value.trim();
-    const linha = Number(valorLinha);
+            let params = {};
+            
+            // Regras baseadas no tempo
+            if (tempoViagem >= 0 && tempoViagem <= 30) {
+                params = { adiantamento: 40, distorcao: 200, atraso25: 100, atraso100: 200 };
+            } else if (tempoViagem > 30 && tempoViagem <= 60) {
+                params = { adiantamento: 28, distorcao: 200, atraso25: 80, atraso100: 200 };
+            } else if (tempoViagem > 60 && tempoViagem <= 200) {
+                params = { adiantamento: 20, distorcao: 200, atraso25: 40, atraso100: 200 };
+            } else {
+                alert('Aviso: O tempo de viagem excede os 200 minutos catalogados na regra.');
+                return;
+            }
 
-    if (isNaN(linha) || linha <= 0) {
-        alert("Digite um número de linha válido (ex: 4, 11, 45).");
-        clearInputFields();
-        return;
-    }
+            // Matematica de Limites
+            const adiantamentoLimiteMin = Math.round(tempoViagem * (params.adiantamento / 100));
+            const distorcaoLimiteMin = Math.round(tempoViagem * (params.distorcao / 100));
+            const atraso25LimiteMin = Math.round(tempoViagem * (params.atraso25 / 100));
+            const atraso100LimiteMin = Math.round(tempoViagem * (params.atraso100 / 100));
 
-    const programacao = await fetchHorariosFromAPI(linha);
-    dadosDaAPI = programacao;
+            // Aplica os minutos em cima das horas digitadas
+            const saidaAdiantamento = horaInicial - adiantamentoLimiteMin;
+            const chegadaAdiantamento = horaFinal - adiantamentoLimiteMin;
+            const saidaAdiantamentoDist = horaInicial - distorcaoLimiteMin;
+            const chegadaAdiantamentoDist = horaFinal - distorcaoLimiteMin;
+            
+            const saidaAtraso25 = horaInicial + atraso25LimiteMin;
+            const chegadaAtraso25 = horaFinal + atraso25LimiteMin;
+            const saidaAtraso100 = horaInicial + atraso100LimiteMin;
+            const chegadaAtraso100 = horaFinal + atraso100LimiteMin;
 
-    if (!programacao) {
-        alert(`Nenhum horário encontrado para a linha ${linha}. Verifique o número.`);
-        clearInputFields();
-        return;
-    }
-
-    // Preenche tabelas
-    while (tabelaSelect.options.length > 1) tabelaSelect.options[1].remove();
-    while (horaInicialSelect.options.length > 1) horaInicialSelect.options[1].remove();
-    horaInicialSelect.disabled = true;
-
-    const quadro = programacao.quadro;
-    let tabelas = quadro.tabelas.tabela;
-    if (!Array.isArray(tabelas)) tabelas = [tabelas];
-
-    tabelas.sort((a, b) => Number(a.numero) - Number(b.numero));
-    tabelas.forEach(tabela => {
-        const option = document.createElement('option');
-        option.value = tabela.numero;
-        option.textContent = `Tabela ${tabela.numero}`;
-        tabelaSelect.appendChild(option);
-    });
-    tabelaSelect.disabled = false;
-});
-
-tabelaSelect.addEventListener('change', (e) => {
-    const tabelaSelecionada = e.target.value;
-    if (!tabelaSelecionada) return;
-
-    horaInicialSelect.disabled = false;
-    while (horaInicialSelect.options.length > 1) horaInicialSelect.options[1].remove();
-
-    const quadro = dadosDaAPI.quadro;
-    let tabelas = quadro.tabelas.tabela;
-    if (!Array.isArray(tabelas)) tabelas = [tabelas];
-    const tabela = tabelas.find(t => String(t.numero) === String(tabelaSelecionada));
-
-    let trechos = tabela.trechos.trecho;
-    if (!Array.isArray(trechos)) trechos = [trechos];
-
-    trechos.sort((a, b) => parseHM(a.inicio.horario.split('T')[1].slice(0, 5)) - parseHM(b.inicio.horario.split('T')[1].slice(0, 5)));
-    trechos.forEach(trecho => {
-        const horario = trecho.inicio.horario.split('T')[1].slice(0, 5);
-        const posto = trecho.inicio.postoControle.trim();
-        const option = document.createElement('option');
-        option.value = horario;
-        option.textContent = `${horario} - ${posto}`;
-        horaInicialSelect.appendChild(option);
-    });
-});
-
-calcularButton.addEventListener('click', () => {
-    clearFields();
-    const linha = linhaInput.value;
-    const tabela = tabelaSelect.value;
-    const horaInicialInputVal = horaInicialSelect.value;
-
-    if (!linha || !tabela || !horaInicialInputVal) {
-        alert('Preencha todos os campos: Linha, Tabela e Hora Inicial.');
-        return;
+            // Injeta os valores corretos na tela
+            if (tempoViagem >= 0 && tempoViagem <= 30) {
+                document.getElementById('saida-0-30-25').value = fmtHM(saidaAtraso25);
+                document.getElementById('chegada-0-30-25').value = fmtHM(chegadaAtraso25);
+                document.getElementById('saida-0-30-100').value = fmtHM(saidaAtraso100);
+                document.getElementById('chegada-0-30-100').value = fmtHM(chegadaAtraso100);
+                
+                document.getElementById('saida-0-30-ad').value = fmtHM(saidaAdiantamento);
+                document.getElementById('chegada-0-30-ad').value = fmtHM(chegadaAdiantamento);
+                document.getElementById('saida-0-30-ad-dist').value = fmtHM(saidaAdiantamentoDist);
+                document.getElementById('chegada-0-30-ad-dist').value = fmtHM(chegadaAdiantamentoDist);
+                
+            } else if (tempoViagem > 30 && tempoViagem <= 60) {
+                document.getElementById('saida-31-60-25').value = fmtHM(saidaAtraso25);
+                document.getElementById('chegada-31-60-25').value = fmtHM(chegadaAtraso25);
+                document.getElementById('saida-31-60-100').value = fmtHM(saidaAtraso100);
+                document.getElementById('chegada-31-60-100').value = fmtHM(chegadaAtraso100);
+                
+                document.getElementById('saida-31-60-ad').value = fmtHM(saidaAdiantamento);
+                document.getElementById('chegada-31-60-ad').value = fmtHM(chegadaAdiantamento);
+                document.getElementById('saida-31-60-ad-dist').value = fmtHM(saidaAdiantamentoDist);
+                document.getElementById('chegada-31-60-ad-dist').value = fmtHM(chegadaAdiantamentoDist);
+                
+            } else if (tempoViagem > 60 && tempoViagem <= 200) {
+                document.getElementById('saida-61-200-25').value = fmtHM(saidaAtraso25);
+                document.getElementById('chegada-61-200-25').value = fmtHM(chegadaAtraso25);
+                document.getElementById('saida-61-200-100').value = fmtHM(saidaAtraso100);
+                document.getElementById('chegada-61-200-100').value = fmtHM(chegadaAtraso100);
+                
+                document.getElementById('saida-61-200-ad').value = fmtHM(saidaAdiantamento);
+                document.getElementById('chegada-61-200-ad').value = fmtHM(chegadaAdiantamento);
+                document.getElementById('saida-61-200-ad-dist').value = fmtHM(saidaAdiantamentoDist);
+                document.getElementById('chegada-61-200-ad-dist').value = fmtHM(chegadaAdiantamentoDist);
+            }
+        });
     }
 
-    const horaFinal = findHoraFinal(dadosDaAPI, tabela, horaInicialInputVal);
-    if (!horaFinal) {
-        alert('Horário correspondente não encontrado nos dados.');
-        return;
+    if (limparButton) {
+        limparButton.addEventListener('click', () => {
+            clearInputFields();
+            clearFields();
+        });
     }
 
-    const horaInicial = parseHM(horaInicialInputVal);
-    let tempoViagem = parseHM(horaFinal) - horaInicial;
-    if (tempoViagem < 0) tempoViagem += 24 * 60;
-
-    document.getElementById('hora-final').value = horaFinal;
-    document.getElementById('tempo-viagem').innerText = tempoViagem;
-
-    // Parâmetros oficiais atualizados em 01/06/2026
-    let params;
-    if (tempoViagem <= 30) params = { adiantamento: 40, distorcao: 200, atraso25: 100, atraso100: 200 };
-    else if (tempoViagem <= 60) params = { adiantamento: 28, distorcao: 200, atraso25: 80, atraso100: 200 };
-    else if (tempoViagem <= 200) params = { adiantamento: 20, distorcao: 200, atraso25: 40, atraso100: 200 };
-    else { alert('Tempo de viagem fora do intervalo permitido (0 a 200 minutos).'); return; }
-
-    // Cálculos dos limites
-    const adiantamentoLimiteMin = Math.round(tempoViagem * params.adiantamento / 100);
-    const distorcaoLimiteMin = Math.round(tempoViagem * params.distorcao / 100);
-    const atraso25LimiteMin = Math.round(tempoViagem * params.atraso25 / 100);
-    const atraso100LimiteMin = Math.round(tempoViagem * params.atraso100 / 100);
-
-    const saidaAdiantamento = horaInicial - adiantamentoLimiteMin;
-    const chegadaAdiantamento = parseHM(horaFinal) - adiantamentoLimiteMin;
-    const saidaAdiantamentoDist = horaInicial - distorcaoLimiteMin;
-    const chegadaAdiantamentoDist = parseHM(horaFinal) - distorcaoLimiteMin;
-    const saidaAtraso25 = horaInicial + atraso25LimiteMin;
-    const chegadaAtraso25 = parseHM(horaFinal) + atraso25LimiteMin;
-    const saidaAtraso100 = horaInicial + atraso100LimiteMin;
-    const chegadaAtraso100 = parseHM(horaFinal) + atraso100LimiteMin;
-
-    document.querySelectorAll('.sub-category input').forEach(input => input.value = '');
-
-    // Preenche resultados conforme intervalo
-    if (tempoViagem <= 30) {
-        document.getElementById('saida-0-30-25').value = fmtHM(saidaAtraso25);
-        document.getElementById('chegada-0-30-25').value = fmtHM(chegadaAtraso25);
-        document.getElementById('saida-0-30-100').value = fmtHM(saidaAtraso100);
-        document.getElementById('chegada-0-30-100').value = fmtHM(chegadaAtraso100);
-        document.getElementById('saida-0-30-ad').value = fmtHM(saidaAdiantamento);
-        document.getElementById('chegada-0-30-ad').value = fmtHM(chegadaAdiantamento);
-        document.getElementById('saida-0-30-ad-dist').value = fmtHM(saidaAdiantamentoDist);
-        document.getElementById('chegada-0-30-ad-dist').value = fmtHM(chegadaAdiantamentoDist);
-    } else if (tempoViagem <= 60) {
-        document.getElementById('saida-31-60-25').value = fmtHM(saidaAtraso25);
-        document.getElementById('chegada-31-60-25').value = fmtHM(chegadaAtraso25);
-        document.getElementById('saida-31-60-100').value = fmtHM(saidaAtraso100);
-        document.getElementById('chegada-31-60-100').value = fmtHM(chegadaAtraso100);
-        document.getElementById('saida-31-60-ad').value = fmtHM(saidaAdiantamento);
-        document.getElementById('chegada-31-60-ad').value = fmtHM(chegadaAdiantamento);
-        document.getElementById('saida-31-60-ad-dist').value = fmtHM(saidaAdiantamentoDist);
-        document.getElementById('chegada-31-60-ad-dist').value = fmtHM(chegadaAdiantamentoDist);
-    } else {
-        document.getElementById('saida-61-200-25').value = fmtHM(saidaAtraso25);
-        document.getElementById('chegada-61-200-25').value = fmtHM(chegadaAtraso25);
-        document.getElementById('saida-61-200-100').value = fmtHM(saidaAtraso100);
-        document.getElementById('chegada-61-200-100').value = fmtHM(chegadaAtraso100);
-        document.getElementById('saida-61-200-ad').value = fmtHM(saidaAdiantamento);
-        document.getElementById('chegada-61-200-ad').value = fmtHM(chegadaAdiantamento);
-        document.getElementById('saida-61-200-ad-dist').value = fmtHM(saidaAdiantamentoDist);
-        document.getElementById('chegada-61-200-ad-dist').value = fmtHM(chegadaAdiantamentoDist);
-    }
-});
-
-limparButton.addEventListener('click', clearInputFields);
+}); // Fim do DOMContentLoaded
