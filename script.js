@@ -64,44 +64,32 @@ function xmlParaObjeto(xmlTexto) {
     return converterNo(raiz);
 }
 
-// ==================== 1. BUSCA LISTA DE LINHAS (COM PROXY PARA EVITAR CORS) ====================
-async function carregarListaLinhas() {
-    const urlOriginal = "https://info-bus-fortaleza.vercel.app/api/linhas";
-    // Usa o mesmo proxy da ETUFOR para contornar bloqueio CORS
-    const url = `https://api.allorigins.win/raw?url=${encodeURIComponent(urlOriginal)}`;
-    
-    try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`Erro: ${response.status} ${response.statusText}`);
-        const linhas = await response.json();
-        console.log("✅ Lista de linhas carregada com sucesso:", linhas.length, "linhas");
-        return linhas;
-    } catch (error) {
-        console.error("❌ Falha ao carregar linhas:", error);
-        alert("Não foi possível carregar a lista de referência — a busca por horários funcionará normalmente se o número da linha for válido.");
-        return []; // Retorna lista vazia para não travar o sistema
-    }
-}
-
-// ==================== 2. BUSCA HORÁRIOS NA API DA ETUFOR ====================
+// ==================== BUSCA HORÁRIOS NA API DA ETUFOR (COM PROXY CONFIÁVEL) ====================
 async function fetchHorariosFromAPI(linha) {
     const data = getFormattedDate();
     const urlBaseEtufor = `http://gistapis.etufor.ce.gov.br:8081/api/programacaoDia/${data}?linha=${linha}`;
-    const url = `https://api.allorigins.win/raw?url=${encodeURIComponent(urlBaseEtufor)}`;
+    
+    // ✅ Proxy mais estável para GitHub Pages
+    const url = `https://corsproxy.io/?${encodeURIComponent(urlBaseEtufor)}`;
 
     try {
         const response = await fetch(url, {
-            headers: { 'Accept': 'application/xml, text/xml, */*' }
+            method: 'GET',
+            headers: { 
+                'Accept': 'application/xml, text/xml, */*',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            mode: 'cors'
         });
-        if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
-        
+
+        if (!response.ok) throw new Error(`Servidor retornou erro: ${response.status}`);
         const xmlTexto = await response.text();
         const dadosXml = xmlParaObjeto(xmlTexto);
         return dadosXml?.ArrayOfProgramacao?.programacao;
 
     } catch (error) {
-        console.error("❌ Falha na busca de horários:", error);
-        alert("Erro ao buscar horários — verifique o número da linha e tente novamente.");
+        console.error("❌ Falha na requisição:", error);
+        alert(`Não foi possível carregar os horários.\nVerifique o número da linha ou tente novamente mais tarde.\nDetalhe: ${error.message}`);
         return null;
     }
 }
@@ -129,21 +117,14 @@ function findHoraFinal(dadosDaAPI, tabelaProcurada, horaInicialProcurada) {
     return null;
 }
 
-// ==================== VARIÁVEIS E INICIALIZAÇÃO ====================
+// ==================== VARIÁVEIS E EVENTOS ====================
 const linhaInput = document.getElementById('linha');
 const calcularButton = document.getElementById('calcular');
 const limparButton = document.getElementById('limpar');
 const tabelaSelect = document.getElementById('tabela-select');
 const horaInicialSelect = document.getElementById('hora-inicial-select');
 let dadosDaAPI = null;
-let listaLinhas = [];
 
-// Carrega lista ao abrir a página
-document.addEventListener('DOMContentLoaded', async () => {
-    listaLinhas = await carregarListaLinhas();
-});
-
-// ==================== EVENTOS ====================
 linhaInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
         e.preventDefault();
@@ -155,14 +136,12 @@ linhaInput.addEventListener('blur', async () => {
     const valorLinha = linhaInput.value.trim();
     const linha = Number(valorLinha);
 
-    // Valida apenas formato numérico
     if (isNaN(linha) || linha <= 0) {
         alert("Digite um número de linha válido (ex: 4, 11, 45).");
         clearInputFields();
         return;
     }
 
-    // Busca horários diretamente — não depende da lista de referência
     const programacao = await fetchHorariosFromAPI(linha);
     dadosDaAPI = programacao;
 
