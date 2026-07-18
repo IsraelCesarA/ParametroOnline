@@ -29,8 +29,8 @@ function clearInputFields() {
   if (hr) { hr.value = ''; hr.disabled = true; while(hr.options.length>1) hr.remove(1); }
 }
 
-// 🔴 COLOQUE A URL DA SUA API AQUI (ex: http://localhost:3000 ou https://sua-api.vercel.app)
-const URL_API = 'http://localhost:3000';
+// 🔴 COLOQUE A URL DA SUA API HOSPEDADA (Render/Vercel) — NÃO USE LOCALHOST!
+const URL_API = 'https://api-transporte-fortaleza.onrender.com';
 
 // ==================== SÓ RODA DEPOIS DO HTML CARREGAR ====================
 document.addEventListener('DOMContentLoaded', () => {
@@ -47,12 +47,11 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!res.ok) throw new Error(`Linha ${num} não encontrada`);
       return await res.json();
     } catch (e) {
-      alert(`Erro ao buscar dados: ${e.message}\nVerifique se a API está rodando.`);
+      alert(`Erro: ${e.message}\nVerifique se a API está online.`);
       return null;
     }
   }
 
-  // Eventos
   linhaInput?.addEventListener('keydown', e => {
     if (e.key === 'Enter') { e.preventDefault(); tabelaSel?.focus(); }
   });
@@ -67,7 +66,6 @@ document.addEventListener('DOMContentLoaded', () => {
     dados = await buscarLinha(num);
     if (!dados) return;
 
-    // Carrega tabelas
     while(tabelaSel.options.length>1) tabelaSel.remove(1);
     while(horaSel.options.length>1) horaSel.remove(1);
     horaSel.disabled = true;
@@ -97,7 +95,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Cálculo
   btnCalc?.addEventListener('click', () => {
     clearFields();
     const linha = linhaInput.value;
