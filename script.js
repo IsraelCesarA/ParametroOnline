@@ -1,168 +1,146 @@
-document.addEventListener('DOMContentLoaded', () => {
+const express = require('express');
+const cors = require('cors');
+const cron = require('node-cron');
+const https = require('https');
+const http = require('http');
 
-    // Função auxiliar: Converte string "HH:MM" para minutos totais
-    function parseHM(s) {
-        if (!s) return null;
-        const [hh, mm] = s.split(':').map(Number);
-        return hh * 60 + mm;
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+// 🔴 URL do seu banco de dados (mantém a que você já tem)
+const { Pool } = require('pg');
+const db = new Pool({
+  connectionString: process.env.DATABASE_URL || 'sua-url-do-banco-aqui',
+  ssl: { rejectUnauthorized: false }
+});
+
+// 🔴 URL base da NOVA API
+const API_NOVA_BASE = 'https://api-transporte-rose.vercel.app/api';
+
+// ==================== FUNÇÃO AUXILIAR DE REQUISIÇÃO ====================
+function buscarJSON(url) {
+  return new Promise((resolve, reject) => {
+    const mod = url.startsWith('https') ? https : http;
+    mod.get(url, { headers: { 'Accept': 'application/json' } }, (res) => {
+      let corpo = '';
+      res.on('data', d => corpo += d);
+      res.on('end', () => {
+        try {
+          resolve(JSON.parse(corpo));
+        } catch (e) {
+          reject(new Error(`Resposta não é JSON: ${corpo.slice(0,200)}`));
+        }
+      });
+    }).on('error', reject);
+  });
+}
+
+// ==================== FUNÇÃO DE ATUALIZAÇÃO AUTOMÁTICA ====================
+async function atualizarDados() {
+  console.log("🔄 Atualizando dados da nova API...");
+  const hoje = new Date().toISOString().split('T')[0]; // Formato AAAA-MM-DD
+
+  try {
+    // 1. Busca lista de linhas
+    console.log("📋 Buscando lista de linhas...");
+    const linhas = await buscarJSON(`${API_NOVA_BASE}/linhas`);
+    for (const l of linhas) {
+      await db.query(`
+        INSERT INTO linhas(numero, nome, numero_nome, tipo_linha)
+        VALUES($1, $2, $3, $4)
+        ON CONFLICT(numero) DO UPDATE SET
+          nome = $2, numero_nome = $3, tipo_linha = $4, updated_at = NOW()
+      `, [l.numero, l.nome, l.numero_nome || `${String(l.numero).padStart(3,'0')}-${l.nome}`, l.tipo_linha || 'Convencional']);
     }
+    console.log(`✅ ${linhas.length} linhas atualizadas`);
 
-    // Função auxiliar: Converte minutos totais de volta para "HH:MM"
-    function fmtHM(minutos) {
-        if (minutos === null || isNaN(minutos)) return '';
-        const total = ((Math.round(minutos) % (24 * 60)) + (24 * 60)) % (24 * 60);
-        const hh = String(Math.floor(total / 60)).padStart(2, '0');
-        const mm = String(total % 60).padStart(2, '0');
-        return `${hh}:${mm}`;
+    // 2. Busca programação do dia
+    console.log(`⏰ Buscando horários de ${hoje}...`);
+    const programacao = await buscarJSON(`${API_NOVA_BASE}/programacao/dia/${hoje}`);
+    
+    // Limpa horários antigos do dia antes de inserir os novos
+    await db.query('DELETE FROM horarios WHERE data_referencia = $1', [hoje]);
+
+    // Mapeia os dados conforme estrutura da nova API
+    for (const item of programacao) {
+      // Busca o id da linha correspondente
+      const resLinha = await db.query('SELECT id FROM linhas WHERE numero = $1', [item.linha_numero || item.numero_linha]);
+      if (resLinha.rows.length === 0) continue;
+      const linhaId = resLinha.rows[0].id;
+
+      // Processa tabelas e trechos
+      const tabelas = Array.isArray(item.tabelas) ? item.tabelas : [item.tabelas];
+      for (const tb of tabelas) {
+        const trechos = Array.isArray(tb.trechos) ? tb.trechos : [tb.trechos];
+        for (const tr of trechos) {
+          await db.query(`
+            INSERT INTO horarios(linha_id, tabela, posto_inicio, horario_inicio, horario_fim, data_referencia)
+            VALUES($1, $2, $3, $4::TIME, $5::TIME, $6::DATE)
+            ON CONFLICT DO NOTHING
+          `, [
+            linhaId,
+            tb.numero || tb.tabela,
+            tr.posto_inicio || tr.posto || 'Ponto Inicial',
+            tr.horario_inicio || tr.inicio,
+            tr.horario_fim || tr.fim,
+            hoje
+          ]);
+        }
+      }
     }
+    console.log("✅ Horários atualizados com sucesso!");
 
-    // Limpa apenas os resultados da tela
-    function clearFields() {
-        document.getElementById('tempo-viagem').innerText = '...';
-        const inputs = document.querySelectorAll('.sub-category input');
-        inputs.forEach(input => input.value = '');
-    }
+  } catch (erro) {
+    console.error("❌ Falha na atualização:", erro.message);
+  }
+}
 
-    // Limpa os campos de digitação
-    function clearInputFields() {
-        if(document.getElementById('linha')) document.getElementById('linha').value = '';
-        if(document.getElementById('tabela')) document.getElementById('tabela').value = '';
-        if(document.getElementById('hora-inicial')) document.getElementById('hora-inicial').value = '';
-        if(document.getElementById('hora-final')) document.getElementById('hora-final').value = '';
-    }
+// ==================== AGENDAMENTO ====================
+cron.schedule('0 2 * * *', atualizarDados); // Roda todos os dias às 02h da manhã
 
-    // Pega os botões na tela
-    const calcularButton = document.getElementById('calcular');
-    const limparButton = document.getElementById('limpar');
+// ==================== ROTAS DA SUA API ====================
+app.get('/linhas', async (req, res) => {
+  try {
+    const resultado = await db.query('SELECT * FROM linhas ORDER BY numero');
+    res.json(resultado.rows);
+  } catch (e) {
+    res.status(500).json({ erro: 'Erro ao buscar linhas', detalhe: e.message });
+  }
+});
 
-    // Mapeamento de atalhos do teclado (Avançar com a tecla Enter)
-    const linhaInput = document.getElementById('linha');
-    const tabelaInput = document.getElementById('tabela');
-    const horaInicialInput = document.getElementById('hora-inicial');
-    const horaFinalInput = document.getElementById('hora-final');
+app.get('/linhas/:numero/horarios', async (req, res) => {
+  try {
+    const num = req.params.numero;
+    const linha = await db.query('SELECT * FROM linhas WHERE numero = $1', [num]);
+    if (linha.rows.length === 0) return res.status(404).json({ erro: 'Linha não encontrada' });
 
-    if (linhaInput) {
-        linhaInput.addEventListener('keydown', (e) => { 
-            if (e.key === 'Enter') { e.preventDefault(); if(tabelaInput) tabelaInput.focus(); } 
-        });
-    }
-    if (tabelaInput) {
-        tabelaInput.addEventListener('keydown', (e) => { 
-            if (e.key === 'Enter') { e.preventDefault(); if(horaInicialInput) horaInicialInput.focus(); } 
-        });
-    }
-    if (horaInicialInput) {
-        horaInicialInput.addEventListener('keydown', (e) => { 
-            if (e.key === 'Enter') { e.preventDefault(); if(horaFinalInput) horaFinalInput.focus(); } 
-        });
-    }
-    if (horaFinalInput) {
-        horaFinalInput.addEventListener('keydown', (e) => { 
-            if (e.key === 'Enter') { e.preventDefault(); if(calcularButton) calcularButton.click(); } 
-        });
-    }
+    const horarios = await db.query(`
+      SELECT tabela, posto_inicio, horario_inicio, horario_fim
+      FROM horarios 
+      WHERE linha_id = $1 AND data_referencia = CURRENT_DATE
+      ORDER BY tabela, horario_inicio
+    `, [linha.rows[0].id]);
 
-    // -------------------------------------------------------------
-    // EVENTO PRINCIPAL: CLIQUE NO BOTÃO CALCULAR
-    // -------------------------------------------------------------
-    if (calcularButton) {
-        calcularButton.addEventListener('click', () => {
-            clearFields();
+    res.json({ linha: linha.rows[0], horarios: horarios.rows });
+  } catch (e) {
+    res.status(500).json({ erro: 'Erro ao buscar horários', detalhe: e.message });
+  }
+});
 
-            const horaInicialInputVal = document.getElementById('hora-inicial').value;
-            const horaFinalInputVal = document.getElementById('hora-final').value;
+// Rota extra: repassa dados diretamente da nova API se precisar
+app.get('/programacao/dia/:data', async (req, res) => {
+  try {
+    const dados = await buscarJSON(`${API_NOVA_BASE}/programacao/dia/${req.params.data}`);
+    res.json(dados);
+  } catch (e) {
+    res.status(500).json({ erro: 'Erro ao buscar programação', detalhe: e.message });
+  }
+});
 
-            // Bloqueia e avisa se estiver vazio
-            if (!horaInicialInputVal || !horaFinalInputVal) {
-                alert('Por favor, preencha a Hora Inicial e a Hora Final.');
-                return;
-            }
-
-            const horaInicial = parseHM(horaInicialInputVal);
-            const horaFinal = parseHM(horaFinalInputVal);
-            
-            // Calcula tempo de viagem
-            let tempoViagem = horaFinal - horaInicial;
-            if (tempoViagem < 0) {
-                tempoViagem += 24 * 60; // Ajusta se virou a meia-noite
-            }
-
-            // Mostra o resultado do tempo de viagem
-            document.getElementById('tempo-viagem').innerText = tempoViagem;
-
-            let params = {};
-            
-            // Regras baseadas no tempo
-            if (tempoViagem >= 0 && tempoViagem <= 30) {
-                params = { adiantamento: 40, distorcao: 200, atraso25: 100, atraso100: 200 };
-            } else if (tempoViagem > 30 && tempoViagem <= 60) {
-                params = { adiantamento: 28, distorcao: 200, atraso25: 80, atraso100: 200 };
-            } else if (tempoViagem > 60 && tempoViagem <= 200) {
-                params = { adiantamento: 20, distorcao: 200, atraso25: 40, atraso100: 200 };
-            } else {
-                alert('Aviso: O tempo de viagem excede os 200 minutos catalogados na regra.');
-                return;
-            }
-
-            // Matematica de Limites
-            const adiantamentoLimiteMin = Math.round(tempoViagem * (params.adiantamento / 100));
-            const distorcaoLimiteMin = Math.round(tempoViagem * (params.distorcao / 100));
-            const atraso25LimiteMin = Math.round(tempoViagem * (params.atraso25 / 100));
-            const atraso100LimiteMin = Math.round(tempoViagem * (params.atraso100 / 100));
-
-            // Aplica os minutos em cima das horas digitadas
-            const saidaAdiantamento = horaInicial - adiantamentoLimiteMin;
-            const chegadaAdiantamento = horaFinal - adiantamentoLimiteMin;
-            const saidaAdiantamentoDist = horaInicial - distorcaoLimiteMin;
-            const chegadaAdiantamentoDist = horaFinal - distorcaoLimiteMin;
-            
-            const saidaAtraso25 = horaInicial + atraso25LimiteMin;
-            const chegadaAtraso25 = horaFinal + atraso25LimiteMin;
-            const saidaAtraso100 = horaInicial + atraso100LimiteMin;
-            const chegadaAtraso100 = horaFinal + atraso100LimiteMin;
-
-            // Injeta os valores corretos na tela
-            if (tempoViagem >= 0 && tempoViagem <= 30) {
-                document.getElementById('saida-0-30-25').value = fmtHM(saidaAtraso25);
-                document.getElementById('chegada-0-30-25').value = fmtHM(chegadaAtraso25);
-                document.getElementById('saida-0-30-100').value = fmtHM(saidaAtraso100);
-                document.getElementById('chegada-0-30-100').value = fmtHM(chegadaAtraso100);
-                
-                document.getElementById('saida-0-30-ad').value = fmtHM(saidaAdiantamento);
-                document.getElementById('chegada-0-30-ad').value = fmtHM(chegadaAdiantamento);
-                document.getElementById('saida-0-30-ad-dist').value = fmtHM(saidaAdiantamentoDist);
-                document.getElementById('chegada-0-30-ad-dist').value = fmtHM(chegadaAdiantamentoDist);
-                
-            } else if (tempoViagem > 30 && tempoViagem <= 60) {
-                document.getElementById('saida-31-60-25').value = fmtHM(saidaAtraso25);
-                document.getElementById('chegada-31-60-25').value = fmtHM(chegadaAtraso25);
-                document.getElementById('saida-31-60-100').value = fmtHM(saidaAtraso100);
-                document.getElementById('chegada-31-60-100').value = fmtHM(chegadaAtraso100);
-                
-                document.getElementById('saida-31-60-ad').value = fmtHM(saidaAdiantamento);
-                document.getElementById('chegada-31-60-ad').value = fmtHM(chegadaAdiantamento);
-                document.getElementById('saida-31-60-ad-dist').value = fmtHM(saidaAdiantamentoDist);
-                document.getElementById('chegada-31-60-ad-dist').value = fmtHM(chegadaAdiantamentoDist);
-                
-            } else if (tempoViagem > 60 && tempoViagem <= 200) {
-                document.getElementById('saida-61-200-25').value = fmtHM(saidaAtraso25);
-                document.getElementById('chegada-61-200-25').value = fmtHM(chegadaAtraso25);
-                document.getElementById('saida-61-200-100').value = fmtHM(saidaAtraso100);
-                document.getElementById('chegada-61-200-100').value = fmtHM(chegadaAtraso100);
-                
-                document.getElementById('saida-61-200-ad').value = fmtHM(saidaAdiantamento);
-                document.getElementById('chegada-61-200-ad').value = fmtHM(chegadaAdiantamento);
-                document.getElementById('saida-61-200-ad-dist').value = fmtHM(saidaAdiantamentoDist);
-                document.getElementById('chegada-61-200-ad-dist').value = fmtHM(chegadaAdiantamentoDist);
-            }
-        });
-    }
-
-    if (limparButton) {
-        limparButton.addEventListener('click', () => {
-            clearInputFields();
-            clearFields();
-        });
-    }
-
-}); // Fim do DOMContentLoaded
+// Inicia servidor
+const porta = process.env.PORT || 3000;
+app.listen(porta, async () => {
+  console.log(`🚀 API rodando na porta ${porta}`);
+  await atualizarDados(); // Primeira carga logo ao iniciar
+});
