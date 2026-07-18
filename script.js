@@ -29,8 +29,8 @@ function clearInputFields() {
   if (hr) { hr.value = ''; hr.disabled = true; while(hr.options.length>1) hr.remove(1); }
 }
 
-// 🔴 COLOQUE A URL DA SUA API HOSPEDADA (Render/Vercel) — NÃO USE LOCALHOST!
-const URL_API = 'https://api-transporte-fortaleza.onrender.com';
+// ✅ URL DEFINITIVA DA SUA API NO VERCEL (não altere mais!)
+const URL_API = 'https://api-transporte-a2h2z6y39-israelcesaras-projects.vercel.app';
 
 // ==================== SÓ RODA DEPOIS DO HTML CARREGAR ====================
 document.addEventListener('DOMContentLoaded', () => {
@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!res.ok) throw new Error(`Linha ${num} não encontrada`);
       return await res.json();
     } catch (e) {
-      alert(`Erro: ${e.message}\nVerifique se a API está online.`);
+      alert(`Erro ao buscar dados: ${e.message}\nVerifique se a API está online.`);
       return null;
     }
   }
@@ -57,8 +57,8 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   linhaInput?.addEventListener('blur', async () => {
-    const num = Number(linhaInput.value.trim());
-    if (isNaN(num) || num <= 0) {
+    const num = String(linhaInput.value.trim());
+    if (!num) {
       alert('Digite um número de linha válido.');
       clearInputFields();
       return;
