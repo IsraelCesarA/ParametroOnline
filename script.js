@@ -29,8 +29,8 @@ function clearInputFields() {
   if (hr) { hr.value = ''; hr.disabled = true; while(hr.options.length>1) hr.remove(1); }
 }
 
-// 🔴 COLOQUE A URL DA SUA API AQUI (ex: https://seu-projeto.vercel.app)
-const URL_API = 'COLOQUE_URL_DA_SUA_API_AQUI';
+// 🔴 COLOQUE A URL DA SUA API AQUI (ex: http://localhost:3000 ou https://sua-api.vercel.app)
+const URL_API = 'http://localhost:3000';
 
 // ==================== SÓ RODA DEPOIS DO HTML CARREGAR ====================
 document.addEventListener('DOMContentLoaded', () => {
@@ -44,15 +44,15 @@ document.addEventListener('DOMContentLoaded', () => {
   async function buscarLinha(num) {
     try {
       const res = await fetch(`${URL_API}/linhas/${num}/horarios`);
-      if (!res.ok) throw new Error('Linha não encontrada');
+      if (!res.ok) throw new Error(`Linha ${num} não encontrada`);
       return await res.json();
     } catch (e) {
-      alert(`Erro: ${e.message}`);
+      alert(`Erro ao buscar dados: ${e.message}\nVerifique se a API está rodando.`);
       return null;
     }
   }
 
-  // Eventos originais mantidos
+  // Eventos
   linhaInput?.addEventListener('keydown', e => {
     if (e.key === 'Enter') { e.preventDefault(); tabelaSel?.focus(); }
   });
@@ -67,6 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
     dados = await buscarLinha(num);
     if (!dados) return;
 
+    // Carrega tabelas
     while(tabelaSel.options.length>1) tabelaSel.remove(1);
     while(horaSel.options.length>1) horaSel.remove(1);
     horaSel.disabled = true;
@@ -96,13 +97,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Cálculo completo mantido igual
+  // Cálculo
   btnCalc?.addEventListener('click', () => {
     clearFields();
     const linha = linhaInput.value;
     const tab = tabelaSel.value;
     const hrIni = horaSel.value;
-    if (!linha || !tab || !hrIni) { alert('Preencha todos os campos.'); return; }
+    if (!linha || !tab || !hrIni) { alert('Preencha Linha, Tabela e Hora Inicial.'); return; }
 
     const reg = dados.horarios.find(h => String(h.tabela) === String(tab) && h.horario_inicio === hrIni);
     if (!reg) { alert('Horário não encontrado.'); return; }
