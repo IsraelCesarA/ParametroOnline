@@ -22,20 +22,24 @@
             <div class="input-section">
                 <div class="input-group">
                     <label for="linha">LINHA:</label>
-                    <input type="text" id="linha" placeholder="Opcional" />
+                    <input type="text" id="linha" placeholder="Número da linha" />
                 </div>
                 <div class="input-group">
-                    <label for="tabela">TABELA:</label>
-                    <input type="text" id="tabela" placeholder="Opcional" />
+                    <label for="tabela-select">TABELA:</label>
+                    <select id="tabela-select" disabled>
+                        <option value="">Escolha</option>
+                    </select>
                 </div>
                 
                 <div class="input-group">
-                    <label for="hora-inicial">HORA INICIAL:</label>
-                    <input type="time" id="hora-inicial" required />
+                    <label for="hora-inicial-select">HORA INICIAL:</label>
+                    <select id="hora-inicial-select" disabled>
+                        <option value="">Escolha</option>
+                    </select>
                 </div>
                 <div class="input-group">
                     <label for="hora-final">HORA FINAL:</label>
-                    <input type="time" id="hora-final" required />
+                    <input type="text" id="hora-final" readonly />
                 </div>
                 
                 <div class="input-group">
