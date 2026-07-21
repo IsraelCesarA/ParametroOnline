@@ -5,6 +5,7 @@ function parseHM(s) {
 }
 
 function fmtHM(minutos) {
+    if (minutos === null || isNaN(minutos)) return '';
     const total = ((Math.round(minutos) % (24 * 60)) + (24 * 60)) % (24 * 60);
     const hh = String(Math.floor(total / 60)).padStart(2, '0');
     const mm = String(total % 60).padStart(2, '0');
@@ -14,129 +15,238 @@ function fmtHM(minutos) {
 function clearFields() {
     document.getElementById('tempo-viagem').innerText = '...';
     document.getElementById('hora-final').value = '';
-    document.querySelectorAll('.sub-category input').forEach(input => input.value = '');
+    const inputs = document.querySelectorAll('.sub-category input');
+    inputs.forEach(input => input.value = '');
 }
 
 function clearInputFields() {
     document.getElementById('linha').value = '';
-    const tabelaSelect = document.getElementById('tabela-select');
-    const horaInicialSelect = document.getElementById('hora-inicial-select');
-    tabelaSelect.value = '';
-    tabelaSelect.disabled = true;
-    horaInicialSelect.value = '';
-    horaInicialSelect.disabled = true;
-    
-    // Limpa opções
-    tabelaSelect.innerHTML = '<option></option>';
-    horaInicialSelect.innerHTML = '<option></option>';
-}
-
-// Data formatada para a URL
-function getFormattedDate() {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+    document.getElementById('tabela-select').value = '';
+    document.getElementById('hora-inicial-select').value = '';
+    document.getElementById('tabela-select').disabled = true;
+    document.getElementById('hora-inicial-select').disabled = true;
+    while (tabelaSelect.options.length > 1) {
+        tabelaSelect.options[1].remove();
+    }
+    while (horaInicialSelect.options.length > 1) {
+        horaInicialSelect.options[1].remove();
+    }
 }
 
 async function fetchHorariosFromAPI(linha) {
-    // URL conforme solicitado
-    const url = `https://api-transporte-rose.vercel.app/api/programacao/dia/2026-07-13`;
+    // Nova URL da Vercel com a linha injetada dinamicamente
+    const url = `https://info-bus-fortaleza.vercel.app/api/programacao/${linha}`;
     
     try {
         const response = await fetch(url);
-        if (!response.ok) throw new Error(`Erro: ${response.statusText}`);
-        const dados = await response.json();
+
+        if (!response.ok) {
+            throw new Error(`Erro na requisição: ${response.statusText}`);
+        }
         
-        // ADAPTE AQUI: 'linha', 'tabela', 'horario', 'posto' conforme o JSON real
-        return dados.filter(item => String(item.linha) === String(linha));
+        const dados = await response.json();
+        return dados; 
+
     } catch (error) {
-        console.error("Erro ao buscar dados:", error);
-        alert("Erro ao buscar dados na API.");
+        console.error("Erro ao buscar dados na API:", error);
+        alert("Erro ao buscar horários na API. Verifique a linha e tente novamente.");
         return null;
     }
 }
 
+function findHoraFinal(dadosDaAPI, tabelaProcurada, horaInicialProcurada) {
+    if (!dadosDaAPI || dadosDaAPI.Message) {
+        return null;
+    }
+
+    const tabelas = dadosDaAPI.quadro.tabelas;
+
+    for (const tabela of tabelas) {
+        const numeroTabelaApi = String(tabela.numero).trim().toUpperCase();
+        const numeroTabelaInput = String(tabelaProcurada).trim().toUpperCase();
+
+        if (numeroTabelaApi === numeroTabelaInput) {
+            for (const trecho of tabela.trechos) {
+                const horaInicial = trecho.inicio.horario.slice(trecho.inicio.horario.indexOf('T') + 1, trecho.inicio.horario.length - 3);
+                
+                if (horaInicial === horaInicialProcurada) {
+                    const horaFinal = trecho.fim.horario.slice(trecho.fim.horario.indexOf('T') + 1, trecho.fim.horario.length - 3);
+                    return horaFinal;
+                }
+            }
+        }
+    }
+    return null;
+}
+
 const linhaInput = document.getElementById('linha');
+const calcularButton = document.getElementById('calcular');
+const limparButton = document.getElementById('limpar');
 const tabelaSelect = document.getElementById('tabela-select');
 const horaInicialSelect = document.getElementById('hora-inicial-select');
-let dadosDaAPI = null;
+var dadosDaAPI = null;
+
+linhaInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        tabelaSelect.focus();
+    }
+});
 
 linhaInput.addEventListener('blur', async () => {
-    const linha = linhaInput.value.trim();
-    if (!linha) return;
-
-    const programacao = await fetchHorariosFromAPI(linha);
-    if (programacao && programacao.length > 0) {
+    const linha = Number(linhaInput.value.trim());
+    if (!isNaN(linha) && linha > 0) {
+        const programacao = await fetchHorariosFromAPI(linha);
         dadosDaAPI = programacao;
-        
-        tabelaSelect.innerHTML = '<option></option>';
-        const tabelas = [...new Set(programacao.map(item => item.tabela))].sort((a,b) => a-b);
-        
-        tabelas.forEach(num => {
-            const opt = document.createElement('option');
-            opt.value = num;
-            opt.textContent = num;
-            tabelaSelect.appendChild(opt);
-        });
-        tabelaSelect.disabled = false;
+        if (programacao && programacao.quadro) {
+            if(tabelaSelect.options.length > 1) {
+                while (tabelaSelect.options.length > 1) {
+                    tabelaSelect.options[1].remove();
+                }
+            }
+            if(horaInicialSelect.options.length > 1) {
+                while (horaInicialSelect.options.length > 1) {
+                    horaInicialSelect.options[1].remove();
+                }
+                horaInicialSelect.disabled = true;
+            }
+
+            for(let tabela of programacao.quadro.tabelas) {
+                const tabelas = [];
+                tabelas.push(tabela.numero);
+                tabelas.sort((a, b) => a - b);
+                for (const numeroTabela of tabelas) {
+                    const option = document.createElement('option');
+                    option.value = numeroTabela;
+                    option.textContent = numeroTabela;
+                    tabelaSelect.appendChild(option);
+                }
+            }
+            tabelaSelect.disabled = false;
+        }
     }
 });
 
 tabelaSelect.addEventListener('change', (e) => {
     const tabelaSelecionada = e.target.value;
-    horaInicialSelect.innerHTML = '<option></option>';
-    
-    if (!tabelaSelecionada) return;
+    if (tabelaSelecionada && dadosDaAPI) {
+        horaInicialSelect.disabled = false;
+        if(horaInicialSelect.options.length > 1) {
+            while (horaInicialSelect.options.length > 1) {
+                horaInicialSelect.options[1].remove();
+            }
+        }
 
-    const itens = dadosDaAPI.filter(item => item.tabela == tabelaSelecionada);
-    
-    itens.forEach(item => {
-        const option = document.createElement('option');
-        // Assume que o item tem 'horario' e 'posto'
-        option.value = item.horario; 
-        option.textContent = `${item.horario} (${item.posto})`;
-        horaInicialSelect.appendChild(option);
-    });
-    horaInicialSelect.disabled = false;
+        const tabelaEncontrada = dadosDaAPI.quadro.tabelas.find(t => t.numero == tabelaSelecionada);
+        if (tabelaEncontrada) {
+            for (const trecho of tabelaEncontrada.trechos) {
+                const horarios = [];
+                horarios.push(trecho.inicio.horario.slice(trecho.inicio.horario.indexOf('T') + 1, trecho.inicio.horario.length - 3)+" - "+trecho.inicio.postoControle.trim());
+                horarios.sort((a, b) => parseHM(a.split(" - ")[0]) - parseHM(b.split(" - ")[0]));
+                for (const horario of horarios) {
+                    const option = document.createElement('option');
+                    const [horarioPosto,nomePosto] = horario.split(" - ");
+                    option.value = horarioPosto;
+                    option.textContent = `${horarioPosto}  (${nomePosto})`;
+                    horaInicialSelect.appendChild(option);
+                }
+            }
+        }
+    }
 });
 
-document.getElementById('calcular').addEventListener('click', () => {
-    const horaInicialVal = horaInicialSelect.value;
-    if (!horaInicialVal) {
-        alert('Selecione uma hora inicial.');
-        return;
-    }
-    
-    // Busca o objeto correspondente para pegar a hora final
-    const itemSelecionado = dadosDaAPI.find(i => i.tabela == tabelaSelect.value && i.horario == horaInicialVal);
-    
-    if (!itemSelecionado || !itemSelecionado.horario_fim) {
-        alert('Não foi possível encontrar o horário de término.');
+calcularButton.addEventListener('click', () => {
+    clearFields();
+
+    const linha = linhaInput.value;
+    const tabela = tabelaSelect.value;
+    const horaInicialInputVal = horaInicialSelect.value;
+
+    if (!linha || !tabela || !horaInicialInputVal) {
+        alert('Por favor, preencha a Linha, Tabela e Hora Inicial.');
         return;
     }
 
-    const horaInicialMin = parseHM(itemSelecionado.horario);
-    const horaFinalMin = parseHM(itemSelecionado.horario_fim);
-    let tempoViagem = horaFinalMin - horaInicialMin;
-    if (tempoViagem < 0) tempoViagem += 24 * 60;
+    const horaFinal = findHoraFinal(dadosDaAPI, tabela, horaInicialInputVal);
 
-    document.getElementById('hora-final').value = itemSelecionado.horario_fim;
+    if (!horaFinal) {
+        alert('Horário correspondente não encontrado para a Linha, Tabela e Hora Inicial informadas. Verifique os dados.');
+        return;
+    }
+
+    const horaInicial = parseHM(horaInicialInputVal);
+    let tempoViagem = parseHM(horaFinal) - horaInicial;
+    
+    if (tempoViagem < 0) {
+        tempoViagem += 24 * 60;
+    }
+
+    document.getElementById('hora-final').value = horaFinal;
     document.getElementById('tempo-viagem').innerText = tempoViagem;
-    
-    // Lógica de parâmetros existente
-    let params = {};
-    if (tempoViagem <= 30) params = { adiantamento: 40, distorcao: 200, atraso25: 100, atraso100: 200 };
-    else if (tempoViagem <= 60) params = { adiantamento: 28, distorcao: 200, atraso25: 80, atraso100: 200 };
-    else params = { adiantamento: 20, distorcao: 200, atraso25: 40, atraso100: 200 };
 
-    // Cálculos e preenchimento (adaptar IDs conforme necessário)
-    // Exemplo para o range 0-30:
+    let params = {};
+    
+    if (tempoViagem >= 0 && tempoViagem <= 30) {
+        params = { adiantamento: 40, distorcao: 200, atraso25: 100, atraso100: 200 };
+    } else if (tempoViagem > 30 && tempoViagem <= 60) {
+        params = { adiantamento: 28, distorcao: 200, atraso25: 80, atraso100: 200 };
+    } else if (tempoViagem > 60 && tempoViagem <= 200) {
+        params = { adiantamento: 20, distorcao: 200, atraso25: 40, atraso100: 200 };
+    } else {
+        alert('Tempo de viagem fora do intervalo de 0 a 200 minutos.');
+        return;
+    }
+
     const adiantamentoLimiteMin = Math.round(tempoViagem * (params.adiantamento / 100));
-    document.getElementById('saida-0-30-ad').value = fmtHM(horaInicialMin - adiantamentoLimiteMin);
-    document.getElementById('chegada-0-30-ad').value = fmtHM(horaFinalMin - adiantamentoLimiteMin);
-    // ... repetir lógica para outros campos ...
+    const distorcaoLimiteMin = Math.round(tempoViagem * (params.distorcao / 100));
+    const atraso25LimiteMin = Math.round(tempoViagem * (params.atraso25 / 100));
+    const atraso100LimiteMin = Math.round(tempoViagem * (params.atraso100 / 100));
+
+    const saidaAdiantamento = horaInicial - adiantamentoLimiteMin;
+    const chegadaAdiantamento = parseHM(horaFinal) - adiantamentoLimiteMin;
+    
+    const saidaAdiantamentoDist = horaInicial - distorcaoLimiteMin;
+    const chegadaAdiantamentoDist = parseHM(horaFinal) - distorcaoLimiteMin;
+    
+    const saidaAtraso25 = horaInicial + atraso25LimiteMin;
+    const chegadaAtraso25 = parseHM(horaFinal) + atraso25LimiteMin;
+    
+    const saidaAtraso100 = horaInicial + atraso100LimiteMin;
+    const chegadaAtraso100 = parseHM(horaFinal) + atraso100LimiteMin;
+
+    document.querySelectorAll('.sub-category input').forEach(input => input.value = '');
+    
+    if (tempoViagem >= 0 && tempoViagem <= 30) {
+        document.getElementById('saida-0-30-25').value = fmtHM(saidaAtraso25);
+        document.getElementById('chegada-0-30-25').value = fmtHM(chegadaAtraso25);
+        document.getElementById('saida-0-30-100').value = fmtHM(saidaAtraso100);
+        document.getElementById('chegada-0-30-100').value = fmtHM(chegadaAtraso100);
+        document.getElementById('saida-0-30-ad').value = fmtHM(saidaAdiantamento);
+        document.getElementById('chegada-0-30-ad').value = fmtHM(chegadaAdiantamento);
+        document.getElementById('saida-0-30-ad-dist').value = fmtHM(saidaAdiantamentoDist);
+        document.getElementById('chegada-0-30-ad-dist').value = fmtHM(chegadaAdiantamentoDist);
+    } else if (tempoViagem > 30 && tempoViagem <= 60) {
+        document.getElementById('saida-31-60-25').value = fmtHM(saidaAtraso25);
+        document.getElementById('chegada-31-60-25').value = fmtHM(chegadaAtraso25);
+        document.getElementById('saida-31-60-100').value = fmtHM(saidaAtraso100);
+        document.getElementById('chegada-31-60-100').value = fmtHM(chegadaAtraso100);
+        document.getElementById('saida-31-60-ad').value = fmtHM(saidaAdiantamento);
+        document.getElementById('chegada-31-60-ad').value = fmtHM(chegadaAdiantamento);
+        document.getElementById('saida-31-60-ad-dist').value = fmtHM(saidaAdiantamentoDist);
+        document.getElementById('chegada-31-60-ad-dist').value = fmtHM(chegadaAdiantamentoDist);
+    } else if (tempoViagem > 60 && tempoViagem <= 200) {
+        document.getElementById('saida-61-200-25').value = fmtHM(saidaAtraso25);
+        document.getElementById('chegada-61-200-25').value = fmtHM(chegadaAtraso25);
+        document.getElementById('saida-61-200-100').value = fmtHM(saidaAtraso100);
+        document.getElementById('chegada-61-200-100').value = fmtHM(chegadaAtraso100);
+        document.getElementById('saida-61-200-ad').value = fmtHM(saidaAdiantamento);
+        document.getElementById('chegada-61-200-ad').value = fmtHM(chegadaAdiantamento);
+        document.getElementById('saida-61-200-ad-dist').value = fmtHM(saidaAdiantamentoDist);
+        document.getElementById('chegada-61-200-ad-dist').value = fmtHM(chegadaAdiantamentoDist);
+    }
 });
 
-document.getElementById('limpar').addEventListener('click', clearInputFields);
+limparButton.addEventListener('click', () => {
+    clearInputFields();
+    clearFields();
+});
