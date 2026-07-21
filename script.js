@@ -31,22 +31,19 @@ function clearInputFields() {
     while (horaInicialSelect.options.length > 1) {
         horaInicialSelect.options[1].remove();
     }
+    linhaAtual = '';
 }
 
 async function fetchHorariosFromAPI(linha) {
-    // Nova URL da Vercel com a linha injetada dinamicamente
     const url = `https://info-bus-fortaleza.vercel.app/api/programacao/${linha}`;
     
     try {
         const response = await fetch(url);
-
         if (!response.ok) {
             throw new Error(`Erro na requisição: ${response.statusText}`);
         }
-        
         const dados = await response.json();
         return dados; 
-
     } catch (error) {
         console.error("Erro ao buscar dados na API:", error);
         alert("Erro ao buscar horários na API. Verifique a linha e tente novamente.");
@@ -55,11 +52,13 @@ async function fetchHorariosFromAPI(linha) {
 }
 
 function findHoraFinal(dadosDaAPI, tabelaProcurada, horaInicialProcurada) {
-    if (!dadosDaAPI || dadosDaAPI.Message) {
-        return null;
-    }
+    if (!dadosDaAPI) return null;
 
-    const tabelas = dadosDaAPI.quadro.tabelas;
+    // Tenta encontrar as tabelas independente de como a API estruturou o JSON
+    let tabelas = [];
+    if (dadosDaAPI.quadro && dadosDaAPI.quadro.tabelas) tabelas = dadosDaAPI.quadro.tabelas;
+    else if (dadosDaAPI.tabelas) tabelas = dadosDaAPI.tabelas;
+    else if (Array.isArray(dadosDaAPI)) tabelas = dadosDaAPI;
 
     for (const tabela of tabelas) {
         const numeroTabelaApi = String(tabela.numero).trim().toUpperCase();
@@ -68,10 +67,8 @@ function findHoraFinal(dadosDaAPI, tabelaProcurada, horaInicialProcurada) {
         if (numeroTabelaApi === numeroTabelaInput) {
             for (const trecho of tabela.trechos) {
                 const horaInicial = trecho.inicio.horario.slice(trecho.inicio.horario.indexOf('T') + 1, trecho.inicio.horario.length - 3);
-                
                 if (horaInicial === horaInicialProcurada) {
-                    const horaFinal = trecho.fim.horario.slice(trecho.fim.horario.indexOf('T') + 1, trecho.fim.horario.length - 3);
-                    return horaFinal;
+                    return trecho.fim.horario.slice(trecho.fim.horario.indexOf('T') + 1, trecho.fim.horario.length - 3);
                 }
             }
         }
@@ -84,74 +81,101 @@ const calcularButton = document.getElementById('calcular');
 const limparButton = document.getElementById('limpar');
 const tabelaSelect = document.getElementById('tabela-select');
 const horaInicialSelect = document.getElementById('hora-inicial-select');
-var dadosDaAPI = null;
 
-linhaInput.addEventListener('keydown', (e) => {
+var dadosDaAPI = null;
+var linhaAtual = ''; // Evita recarregar a mesma linha duas vezes seguidas
+
+// Função para buscar e preencher as tabelas
+async function carregarTabelas() {
+    const linha = linhaInput.value.trim();
+    if (!linha || isNaN(Number(linha)) || linha === linhaAtual) return;
+    linhaAtual = linha;
+
+    // Feedback visual de carregamento
+    tabelaSelect.innerHTML = '<option>Carregando...</option>';
+    tabelaSelect.disabled = true;
+    horaInicialSelect.innerHTML = '<option></option>';
+    horaInicialSelect.disabled = true;
+
+    const programacao = await fetchHorariosFromAPI(linha);
+    dadosDaAPI = programacao;
+
+    tabelaSelect.innerHTML = '<option></option>'; // Limpa o "Carregando..."
+
+    if (programacao) {
+        // Suporte flexível para a estrutura da nova API da Vercel
+        let tabelas = [];
+        if (programacao.quadro && programacao.quadro.tabelas) tabelas = programacao.quadro.tabelas;
+        else if (programacao.tabelas) tabelas = programacao.tabelas;
+        else if (Array.isArray(programacao)) tabelas = programacao;
+
+        if (tabelas.length > 0) {
+            const numerosTabelas = tabelas.map(t => t.numero).sort((a, b) => a - b);
+            for (const numeroTabela of numerosTabelas) {
+                const option = document.createElement('option');
+                option.value = numeroTabela;
+                option.textContent = numeroTabela;
+                tabelaSelect.appendChild(option);
+            }
+            tabelaSelect.disabled = false;
+        } else {
+            tabelaSelect.innerHTML = '<option>Sem tabelas</option>';
+        }
+    } else {
+        tabelaSelect.innerHTML = '<option>Erro</option>';
+        linhaAtual = ''; // Reseta para permitir tentar novamente
+    }
+}
+
+// Dispara a busca apertando Enter
+linhaInput.addEventListener('keydown', async (e) => {
     if (e.key === 'Enter') {
         e.preventDefault();
+        await carregarTabelas();
         tabelaSelect.focus();
     }
 });
 
+// Dispara a busca caso o usuário clique fora do campo
 linhaInput.addEventListener('blur', async () => {
-    const linha = Number(linhaInput.value.trim());
-    if (!isNaN(linha) && linha > 0) {
-        const programacao = await fetchHorariosFromAPI(linha);
-        dadosDaAPI = programacao;
-        if (programacao && programacao.quadro) {
-            if(tabelaSelect.options.length > 1) {
-                while (tabelaSelect.options.length > 1) {
-                    tabelaSelect.options[1].remove();
-                }
-            }
-            if(horaInicialSelect.options.length > 1) {
-                while (horaInicialSelect.options.length > 1) {
-                    horaInicialSelect.options[1].remove();
-                }
-                horaInicialSelect.disabled = true;
-            }
-
-            for(let tabela of programacao.quadro.tabelas) {
-                const tabelas = [];
-                tabelas.push(tabela.numero);
-                tabelas.sort((a, b) => a - b);
-                for (const numeroTabela of tabelas) {
-                    const option = document.createElement('option');
-                    option.value = numeroTabela;
-                    option.textContent = numeroTabela;
-                    tabelaSelect.appendChild(option);
-                }
-            }
-            tabelaSelect.disabled = false;
-        }
-    }
+    await carregarTabelas();
 });
 
+// Libera os Horários quando uma Tabela for escolhida
 tabelaSelect.addEventListener('change', (e) => {
     const tabelaSelecionada = e.target.value;
+    
+    horaInicialSelect.innerHTML = '<option></option>'; // Reset
+    
     if (tabelaSelecionada && dadosDaAPI) {
         horaInicialSelect.disabled = false;
-        if(horaInicialSelect.options.length > 1) {
-            while (horaInicialSelect.options.length > 1) {
-                horaInicialSelect.options[1].remove();
-            }
-        }
 
-        const tabelaEncontrada = dadosDaAPI.quadro.tabelas.find(t => t.numero == tabelaSelecionada);
-        if (tabelaEncontrada) {
+        let tabelas = [];
+        if (dadosDaAPI.quadro && dadosDaAPI.quadro.tabelas) tabelas = dadosDaAPI.quadro.tabelas;
+        else if (dadosDaAPI.tabelas) tabelas = dadosDaAPI.tabelas;
+        else if (Array.isArray(dadosDaAPI)) tabelas = dadosDaAPI;
+
+        const tabelaEncontrada = tabelas.find(t => t.numero == tabelaSelecionada);
+        
+        if (tabelaEncontrada && tabelaEncontrada.trechos) {
+            const horarios = [];
             for (const trecho of tabelaEncontrada.trechos) {
-                const horarios = [];
-                horarios.push(trecho.inicio.horario.slice(trecho.inicio.horario.indexOf('T') + 1, trecho.inicio.horario.length - 3)+" - "+trecho.inicio.postoControle.trim());
-                horarios.sort((a, b) => parseHM(a.split(" - ")[0]) - parseHM(b.split(" - ")[0]));
-                for (const horario of horarios) {
-                    const option = document.createElement('option');
-                    const [horarioPosto,nomePosto] = horario.split(" - ");
-                    option.value = horarioPosto;
-                    option.textContent = `${horarioPosto}  (${nomePosto})`;
-                    horaInicialSelect.appendChild(option);
-                }
+                const horaStr = trecho.inicio.horario.slice(trecho.inicio.horario.indexOf('T') + 1, trecho.inicio.horario.length - 3);
+                horarios.push(horaStr + " - " + trecho.inicio.postoControle.trim());
+            }
+            // Ordena os horários do menor para o maior
+            horarios.sort((a, b) => parseHM(a.split(" - ")[0]) - parseHM(b.split(" - ")[0]));
+            
+            for (const horario of horarios) {
+                const option = document.createElement('option');
+                const [horarioPosto, nomePosto] = horario.split(" - ");
+                option.value = horarioPosto;
+                option.textContent = `${horarioPosto}  (${nomePosto})`;
+                horaInicialSelect.appendChild(option);
             }
         }
+    } else {
+        horaInicialSelect.disabled = true;
     }
 });
 
