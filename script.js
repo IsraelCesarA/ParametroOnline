@@ -35,7 +35,10 @@ function clearInputFields() {
 }
 
 async function fetchHorariosFromAPI(linha) {
-    const url = `https://info-bus-fortaleza.vercel.app/api/programacao/${linha}`;
+    const urlApiOriginal = `https://info-bus-fortaleza.vercel.app/api/programacao/${linha}`;
+    
+    // Passa a URL pela ponte do CORS Proxy para evitar o bloqueio de origem cruzada
+    const url = `https://corsproxy.io/?${encodeURIComponent(urlApiOriginal)}`;
     
     try {
         const response = await fetch(url);
@@ -54,7 +57,6 @@ async function fetchHorariosFromAPI(linha) {
 function findHoraFinal(dadosDaAPI, tabelaProcurada, horaInicialProcurada) {
     if (!dadosDaAPI) return null;
 
-    // Tenta encontrar as tabelas independente de como a API estruturou o JSON
     let tabelas = [];
     if (dadosDaAPI.quadro && dadosDaAPI.quadro.tabelas) tabelas = dadosDaAPI.quadro.tabelas;
     else if (dadosDaAPI.tabelas) tabelas = dadosDaAPI.tabelas;
@@ -83,15 +85,13 @@ const tabelaSelect = document.getElementById('tabela-select');
 const horaInicialSelect = document.getElementById('hora-inicial-select');
 
 var dadosDaAPI = null;
-var linhaAtual = ''; // Evita recarregar a mesma linha duas vezes seguidas
+var linhaAtual = '';
 
-// Função para buscar e preencher as tabelas
 async function carregarTabelas() {
     const linha = linhaInput.value.trim();
     if (!linha || isNaN(Number(linha)) || linha === linhaAtual) return;
     linhaAtual = linha;
 
-    // Feedback visual de carregamento
     tabelaSelect.innerHTML = '<option>Carregando...</option>';
     tabelaSelect.disabled = true;
     horaInicialSelect.innerHTML = '<option></option>';
@@ -100,10 +100,9 @@ async function carregarTabelas() {
     const programacao = await fetchHorariosFromAPI(linha);
     dadosDaAPI = programacao;
 
-    tabelaSelect.innerHTML = '<option></option>'; // Limpa o "Carregando..."
+    tabelaSelect.innerHTML = '<option></option>';
 
     if (programacao) {
-        // Suporte flexível para a estrutura da nova API da Vercel
         let tabelas = [];
         if (programacao.quadro && programacao.quadro.tabelas) tabelas = programacao.quadro.tabelas;
         else if (programacao.tabelas) tabelas = programacao.tabelas;
@@ -123,11 +122,10 @@ async function carregarTabelas() {
         }
     } else {
         tabelaSelect.innerHTML = '<option>Erro</option>';
-        linhaAtual = ''; // Reseta para permitir tentar novamente
+        linhaAtual = '';
     }
 }
 
-// Dispara a busca apertando Enter
 linhaInput.addEventListener('keydown', async (e) => {
     if (e.key === 'Enter') {
         e.preventDefault();
@@ -136,16 +134,14 @@ linhaInput.addEventListener('keydown', async (e) => {
     }
 });
 
-// Dispara a busca caso o usuário clique fora do campo
 linhaInput.addEventListener('blur', async () => {
     await carregarTabelas();
 });
 
-// Libera os Horários quando uma Tabela for escolhida
 tabelaSelect.addEventListener('change', (e) => {
     const tabelaSelecionada = e.target.value;
     
-    horaInicialSelect.innerHTML = '<option></option>'; // Reset
+    horaInicialSelect.innerHTML = '<option></option>';
     
     if (tabelaSelecionada && dadosDaAPI) {
         horaInicialSelect.disabled = false;
@@ -163,7 +159,6 @@ tabelaSelect.addEventListener('change', (e) => {
                 const horaStr = trecho.inicio.horario.slice(trecho.inicio.horario.indexOf('T') + 1, trecho.inicio.horario.length - 3);
                 horarios.push(horaStr + " - " + trecho.inicio.postoControle.trim());
             }
-            // Ordena os horários do menor para o maior
             horarios.sort((a, b) => parseHM(a.split(" - ")[0]) - parseHM(b.split(" - ")[0]));
             
             for (const horario of horarios) {
